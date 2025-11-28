@@ -28,15 +28,15 @@ export default function Header() {
           href="/login"
           className="px-[8px] py-[8px] cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <p className="text-[#666666] dark:text-[#999999] text-[12px] font-medium font-sans transition-colors duration-300">
+          <p className="text-[#666666] dark:text-[#999999] text-[14px] font-medium font-sans transition-colors duration-300">
             Log In
           </p>
         </Link>
         <Link
           href="/signup"
-          className="border border-[#1a1a1a] dark:border-white px-[8px] py-[8px] rounded-[8px] cursor-pointer hover:opacity-80 transition-all duration-300"
+          className="border border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)] backdrop-blur-sm px-[8px] py-[8px] rounded-[8px] cursor-pointer hover:opacity-80 transition-all duration-300"
         >
-          <p className="text-[#1a1a1a] dark:text-white text-[12px] font-medium font-sans transition-colors duration-300">
+          <p className="text-[#1a1a1a] dark:text-white text-[14px] font-medium font-sans transition-colors duration-300">
             Sign Up
           </p>
         </Link>
