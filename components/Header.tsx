@@ -16,7 +16,7 @@ export default function Header() {
           <div className="relative shrink-0 w-[20px] h-[20px] mix-blend-luminosity">
             <LogoIcon />
           </div>
-          <p className="text-white text-[20px] lowercase font-sans">
+          <p className="text-[#1a1a1a] dark:text-white text-[20px] lowercase font-sans transition-colors duration-300">
             <span className="font-bold">Basecamp.</span>
             <span className="font-light">space</span>
           </p>
@@ -28,15 +28,15 @@ export default function Header() {
           href="/login"
           className="px-[8px] py-[8px] cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <p className="text-[#999999] text-[12px] font-medium font-sans">
+          <p className="text-[#666666] dark:text-[#999999] text-[12px] font-medium font-sans transition-colors duration-300">
             Log In
           </p>
         </Link>
         <Link
           href="/signup"
-          className="border border-white px-[8px] py-[8px] rounded-[8px] cursor-pointer hover:opacity-80 transition-opacity"
+          className="border border-[#1a1a1a] dark:border-white px-[8px] py-[8px] rounded-[8px] cursor-pointer hover:opacity-80 transition-all duration-300"
         >
-          <p className="text-white text-[12px] font-medium font-sans">
+          <p className="text-[#1a1a1a] dark:text-white text-[12px] font-medium font-sans transition-colors duration-300">
             Sign Up
           </p>
         </Link>
