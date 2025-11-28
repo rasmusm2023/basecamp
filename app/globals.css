@@ -48,3 +48,23 @@
   animation: scaleIn 0.2s ease-out forwards;
 }
 
+/* Smooth placeholder transition - apply to all inputs */
+input::placeholder {
+  opacity: 0.5;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:focus::placeholder,
+input:focus-visible::placeholder {
+  opacity: 0.3;
+}
+
+/* Dark mode placeholder colors */
+.dark input::placeholder {
+  color: #868686;
+}
+
+input::placeholder {
+  color: #666666;
+}
+
