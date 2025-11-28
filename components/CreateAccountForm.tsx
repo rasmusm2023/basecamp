@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "./Header";
 import CaretDown from "./icons/CaretDown";
@@ -10,16 +10,32 @@ import WarningCircle from "./icons/WarningCircle";
 import Info from "./icons/Info";
 import Key from "./icons/Key";
 import XCircle from "./icons/XCircle";
+import Moon from "./icons/Moon";
+import DarkModeToggle from "./icons/DarkModeToggle";
+import { useTheme } from "../contexts/ThemeContext";
 
 type FieldState = "empty" | "valid" | "error";
+type Step = 1 | 2;
+type IntendedUse =
+  | "work"
+  | "personal"
+  | "education"
+  | "collaboration"
+  | "mixed-use"
+  | null;
+type PreferredTheme = "dark" | "light" | null;
 
 interface FormErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export default function CreateAccountForm() {
+  const { theme, setTheme } = useTheme();
+  const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,7 +45,27 @@ export default function CreateAccountForm() {
     email: false,
     password: false,
     confirmPassword: false,
+    firstName: false,
+    lastName: false,
   });
+
+  // Step 2 fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [intendedUse, setIntendedUse] = useState<IntendedUse>(null);
+  const [preferredTheme, setPreferredTheme] = useState<PreferredTheme>(null);
+
+  // Initialize preferredTheme from current theme on mount
+  useEffect(() => {
+    if (!preferredTheme) {
+      setPreferredTheme(theme);
+    }
+  }, []);
+
+  // Sync preferredTheme with actual theme when theme changes
+  useEffect(() => {
+    setPreferredTheme(theme);
+  }, [theme]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -125,7 +161,7 @@ export default function CreateAccountForm() {
     }
   };
 
-  const isFormValid = () => {
+  const isStep1Valid = () => {
     return (
       validateEmail(email) &&
       validatePassword(password) &&
@@ -134,250 +170,541 @@ export default function CreateAccountForm() {
     );
   };
 
+  const isStep2Valid = () => {
+    return (
+      firstName.trim().length > 0 &&
+      lastName.trim().length > 0 &&
+      intendedUse !== null &&
+      preferredTheme !== null &&
+      !errors.firstName &&
+      !errors.lastName
+    );
+  };
+
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    setTouched((prev: typeof touched) => ({ ...prev, firstName: true }));
+
+    if (value.trim().length === 0) {
+      setErrors((prev: FormErrors) => ({
+        ...prev,
+        firstName: "First name is required",
+      }));
+    } else {
+      setErrors((prev: FormErrors) => {
+        const { firstName, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    setTouched((prev: typeof touched) => ({ ...prev, lastName: true }));
+
+    if (value.trim().length === 0) {
+      setErrors((prev: FormErrors) => ({
+        ...prev,
+        lastName: "Last name is required",
+      }));
+    } else {
+      setErrors((prev: FormErrors) => {
+        const { lastName, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleContinue = () => {
+    if (step === 1 && isStep1Valid()) {
+      setStep(2);
+    }
+  };
+
+  const handleCreateAccount = () => {
+    if (isStep2Valid()) {
+      // Handle account creation
+      console.log("Creating account with:", {
+        email,
+        firstName,
+        lastName,
+        intendedUse,
+        preferredTheme,
+      });
+      // TODO: Implement actual account creation
+    }
+  };
+
   const emailState = getEmailState();
   const passwordState = getPasswordState();
   const confirmPasswordState = getConfirmPasswordState();
 
   return (
-    <div className="bg-[#0d0d0d] box-border flex flex-col gap-[100px] items-center px-[36px] py-[16px] min-h-screen w-full">
+    <div className="bg-white dark:bg-[#0d0d0d] box-border flex flex-col gap-[100px] items-center px-[36px] py-[16px] min-h-screen w-full transition-colors duration-300">
       <Header />
 
       <div className="flex flex-col gap-[64px] items-center max-w-[480px] relative w-full">
         {/* Title Section */}
         <div className="flex flex-col gap-[16px] items-center relative">
           <div className="flex flex-col gap-[17px] items-center">
-            <p className="text-white text-[20px] text-center font-light font-sans">
+            <p className="text-[#1a1a1a] dark:text-white text-[20px] text-center font-light font-sans transition-colors duration-300">
               Create an account
             </p>
             <div className="relative shrink-0 w-[16px] h-[16px]">
               <CaretDown />
             </div>
           </div>
-          <h1 className="text-white text-center leading-none font-sans">
-            <span className="font-medium text-[36px]">{`Lets start with the `}</span>
-            <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[40px] font-serif">
-              basics
-            </span>
-            <span className="font-medium text-[36px]">.</span>
-          </h1>
+          {step === 1 ? (
+            <h1 className="text-[#1a1a1a] dark:text-white text-center leading-none font-sans transition-colors duration-300">
+              <span className="font-medium text-[36px]">{`Lets start with the `}</span>
+              <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[40px] font-serif">
+                basics
+              </span>
+              <span className="font-medium text-[36px]">.</span>
+            </h1>
+          ) : (
+            <h1 className="text-[#1a1a1a] dark:text-white text-center leading-[1.5] max-w-[420px] font-sans transition-colors duration-300">
+              <span className="font-medium text-[36px]">{`Last few questions to improve your `}</span>
+              <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[40px] font-serif">
+                experience
+              </span>
+              <span className="font-medium text-[36px]">.</span>
+            </h1>
+          )}
         </div>
 
         {/* Form */}
-        <div className="flex flex-col gap-[36px] items-start relative w-full">
-          {/* Email Field */}
-          <div className="flex flex-col gap-[16px] items-start relative w-full">
-            <p className="text-[#f2f2f2] text-[12px] font-semibold font-sans">
-              Email
-            </p>
-            <div className={`bg-gradient-to-t from-[rgba(80,80,80,0.2)] to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
-              emailState === "error" 
-                ? "border-[#fa8282]" 
-                : emailState === "valid"
-                ? "border-[rgba(255,255,255,0.25)]"
-                : "border-[rgba(255,255,255,0.15)]"
-            }`}>
-              <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  placeholder="your@email.com"
-                  className="bg-transparent border-none outline-none text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#868686] placeholder:opacity-50 transition-opacity duration-200 focus:placeholder:opacity-30"
-                />
-                {emailState === "valid" && (
-                  <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                    <Check />
-                  </div>
-                )}
-                {emailState === "error" && (
-                  <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                    <WarningCircle />
-                  </div>
-                )}
-              </div>
-            </div>
-            {emailState === "error" && errors.email && (
-              <div className="bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden">
-                <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
-                  <p className="text-[#f2f2f2] text-[12px] font-semibold font-sans">
-                    {errors.email}
-                  </p>
-                  <p className="text-[#f2f2f2] text-[10px] font-normal font-sans">
-                    That email doesn't seem quite right. Mind taking another
-                    look?
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Password Field */}
-          <div className="flex flex-col gap-[16px] items-start relative w-full">
-            <div className="flex gap-[8px] items-center relative">
-              <p className="text-[#f2f2f2] text-[12px] font-semibold font-sans">
-                Password
+        {step === 1 ? (
+          <div className="flex flex-col gap-[36px] items-start relative w-full">
+            {/* Email Field */}
+            <div className="flex flex-col gap-[16px] items-start relative w-full">
+              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans transition-colors duration-300">
+                Email
               </p>
-              <button
-                type="button"
-                onClick={() => setShowPasswordTooltip(!showPasswordTooltip)}
-                className="relative shrink-0 w-[10px] h-[10px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
+              <div
+                className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
+                  emailState === "error"
+                    ? "border-[#fa8282]"
+                    : emailState === "valid"
+                    ? "border-[rgba(0,0,0,0.2)] dark:border-[rgba(255,255,255,0.25)]"
+                    : "border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                }`}
               >
-                <Info />
-              </button>
-            </div>
-            <div className={`bg-gradient-to-t from-[rgba(80,80,80,0.2)] to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
-              passwordState === "error" 
-                ? "border-[#fa8282]" 
-                : passwordState === "valid"
-                ? "border-[rgba(255,255,255,0.25)]"
-                : "border-[rgba(255,255,255,0.15)]"
-            }`}>
-              <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => handlePasswordChange(e.target.value)}
-                  placeholder="Choose a password"
-                  className="bg-transparent border-none outline-none text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#868686] placeholder:opacity-50 transition-opacity duration-200 focus:placeholder:opacity-30"
-                />
-                {passwordState === "valid" && (
-                  <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                    <Check />
-                  </div>
-                )}
-                {passwordState === "error" && (
-                  <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                    <WarningCircle />
-                  </div>
-                )}
-              </div>
-            </div>
-            {showPasswordTooltip && (
-              <div className="bg-[rgba(255,255,49,0.25)] border border-[#ffff31] relative rounded-[8px] w-full animate-slide-down overflow-hidden">
-                <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
-                  <div className="flex items-center justify-between relative w-full">
-                    <div className="flex gap-[8px] items-center relative">
-                      <div className="relative shrink-0 w-[16px] h-[16px] animate-fade-in">
-                        <Key />
-                      </div>
-                      <div className="text-[#f2f2f2] text-[10px] font-sans leading-[1.25]">
-                        <p className="font-semibold mb-0">
-                          Password must include:
-                          <br />
-                          <br />
-                        </p>
-                        <p className="font-normal">
-                          • At least 8 characters
-                          <br />
-                          • Letters and numbers
-                          <br />• Optional: symbols or spaces
-                        </p>
-                      </div>
+                <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => handleEmailChange(e.target.value)}
+                    placeholder="your@email.com"
+                    className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] placeholder:opacity-50 transition-all duration-200 focus:placeholder:opacity-30"
+                  />
+                  {emailState === "valid" && (
+                    <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
+                      <Check />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswordTooltip(false)}
-                      className="relative shrink-0 w-[16px] h-[16px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
+                  )}
+                  {emailState === "error" && (
+                    <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
+                      <WarningCircle />
+                    </div>
+                  )}
+                </div>
+              </div>
+              {emailState === "error" && errors.email && (
+                <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
+                  <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
+                    <p className="text-[#991b1b] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans transition-colors duration-300">
+                      {errors.email}
+                    </p>
+                    <p className="text-[#991b1b] dark:text-[#f2f2f2] text-[10px] font-normal font-sans transition-colors duration-300">
+                      That email doesn't seem quite right. Mind taking another
+                      look?
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div className="flex flex-col gap-[16px] items-start relative w-full">
+              <div className="flex gap-[8px] items-center relative">
+                <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans transition-colors duration-300">
+                  Password
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordTooltip(!showPasswordTooltip)}
+                  className="relative shrink-0 w-[10px] h-[10px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
+                >
+                  <Info />
+                </button>
+              </div>
+              <div
+                className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
+                  passwordState === "error"
+                    ? "border-[#fa8282]"
+                    : passwordState === "valid"
+                    ? "border-[rgba(0,0,0,0.2)] dark:border-[rgba(255,255,255,0.25)]"
+                    : "border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                }`}
+              >
+                <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    placeholder="Choose a password"
+                    className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] placeholder:opacity-50 transition-all duration-200 focus:placeholder:opacity-30"
+                  />
+                  {passwordState === "valid" && (
+                    <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
+                      <Check />
+                    </div>
+                  )}
+                  {passwordState === "error" && (
+                    <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
+                      <WarningCircle />
+                    </div>
+                  )}
+                </div>
+              </div>
+              {showPasswordTooltip && (
+                <div className="bg-[rgba(255,255,49,0.25)] border border-[#ffff31] relative rounded-[8px] w-full animate-slide-down overflow-hidden">
+                  <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
+                    <div className="flex items-center justify-between relative w-full">
+                      <div className="flex gap-[8px] items-center relative">
+                        <div className="relative shrink-0 w-[16px] h-[16px] animate-fade-in">
+                          <Key />
+                        </div>
+                        <div className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[10px] font-sans leading-[1.25] transition-colors duration-300">
+                          <p className="font-semibold mb-0">
+                            Password must include:
+                            <br />
+                            <br />
+                          </p>
+                          <p className="font-normal">
+                            • At least 8 characters
+                            <br />
+                            • Letters and numbers
+                            <br />• Optional: symbols or spaces
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordTooltip(false)}
+                        className="relative shrink-0 w-[16px] h-[16px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
+                      >
+                        <XCircle />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {passwordState === "error" && errors.password && (
+                <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
+                  <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
+                    <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#991b1b] dark:text-[#f2f2f2] font-sans transition-colors duration-300">
+                      <p className="text-[12px] font-semibold">
+                        {errors.password}
+                      </p>
+                      <p className="text-[10px] font-normal">
+                        The password doesn't meet all the requirements.
+                      </p>
+                      <p className="text-[10px] font-normal leading-[1.25]">
+                        • At least 8 characters
+                        <br />
+                        • Letters and numbers
+                        <br />• Optional: symbols or spaces
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="flex flex-col gap-[16px] items-start relative w-full">
+              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans transition-colors duration-300">
+                Confirm Password
+              </p>
+              <div
+                className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
+                  confirmPasswordState === "error"
+                    ? "border-[#fa8282]"
+                    : confirmPasswordState === "valid"
+                    ? "border-[rgba(0,0,0,0.2)] dark:border-[rgba(255,255,255,0.25)]"
+                    : "border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                }`}
+              >
+                <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) =>
+                      handleConfirmPasswordChange(e.target.value)
+                    }
+                    placeholder="Enter your password again"
+                    className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] placeholder:opacity-50 transition-all duration-200 focus:placeholder:opacity-30"
+                  />
+                  {confirmPasswordState === "valid" && (
+                    <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
+                      <Check />
+                    </div>
+                  )}
+                  {confirmPasswordState === "error" && (
+                    <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
+                      <WarningCircle />
+                    </div>
+                  )}
+                </div>
+              </div>
+              {confirmPasswordState === "error" && errors.confirmPassword && (
+                <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
+                  <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
+                    <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#991b1b] dark:text-[#f2f2f2] font-sans transition-colors duration-300">
+                      <p className="text-[12px] font-semibold">
+                        Passwords don't match
+                      </p>
+                      <p className="text-[10px] font-normal">
+                        Double-check your password — the two entries must be the
+                        same.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Continue Button */}
+            <button
+              type="button"
+              onClick={handleContinue}
+              disabled={!isStep1Valid()}
+              className={`w-full flex items-center justify-between px-[16px] py-[20px] rounded-[8px] transition-all duration-300 ${
+                isStep1Valid()
+                  ? "bg-[#ffff31] shadow-[8px_8px_64px_0px_rgba(250,250,130,0.25)] cursor-pointer hover:opacity-90 hover:shadow-[8px_8px_64px_0px_rgba(250,250,130,0.35)] text-[#0d0d0d] transform hover:scale-[1.01]"
+                  : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
+              }`}
+            >
+              <div className="w-[16px]" />
+              <p className="text-[14px] font-semibold font-sans transition-opacity duration-300">
+                Continue
+              </p>
+              <div className="relative shrink-0 w-[12px] h-[12px] transition-transform duration-300">
+                <CaretRight />
+              </div>
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-[64px] items-start relative w-full">
+            {/* First Name and Last Name Fields */}
+            <div className="flex gap-[16px] items-start justify-center relative w-full">
+              <div className="basis-0 flex flex-col gap-[16px] grow items-start min-h-px min-w-px relative">
+                <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+                  First name
+                </p>
+                <div
+                  className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
+                    errors.firstName
+                      ? "border-[#fa8282]"
+                      : firstName.trim().length > 0
+                      ? "border-[rgba(0,0,0,0.2)] dark:border-[rgba(255,255,255,0.25)]"
+                      : "border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => handleFirstNameChange(e.target.value)}
+                      placeholder="Jane"
+                      className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] placeholder:opacity-50 transition-all duration-200 focus:placeholder:opacity-30"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="basis-0 flex flex-col gap-[16px] grow items-start min-h-px min-w-px relative">
+                <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+                  Last name
+                </p>
+                <div
+                  className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
+                    errors.lastName
+                      ? "border-[#fa8282]"
+                      : lastName.trim().length > 0
+                      ? "border-[rgba(0,0,0,0.2)] dark:border-[rgba(255,255,255,0.25)]"
+                      : "border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => handleLastNameChange(e.target.value)}
+                      placeholder="Doe"
+                      className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] placeholder:opacity-50 transition-all duration-200 focus:placeholder:opacity-30"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Intended Use Selection */}
+            <div className="flex flex-col gap-[16px] items-center relative w-full">
+              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+                What best describes your intended use
+              </p>
+              <div className="flex gap-[8px] items-start relative flex-wrap">
+                {(
+                  [
+                    "work",
+                    "personal",
+                    "education",
+                    "collaboration",
+                    "mixed-use",
+                  ] as const
+                ).map((use) => (
+                  <button
+                    key={use}
+                    type="button"
+                    onClick={() => setIntendedUse(use)}
+                    className={`border-2 relative rounded-[8px] transition-all duration-300 ${
+                      intendedUse === use
+                        ? "bg-[rgba(255,255,49,0.2)] border-[rgba(255,255,49,0.75)]"
+                        : "bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                    }`}
+                  >
+                    <div className="flex gap-[8px] items-center p-[16px] relative rounded-[inherit]">
+                      <p
+                        className={`text-[12px] font-semibold font-sans text-center whitespace-nowrap transition-colors duration-300 ${
+                          intendedUse === use
+                            ? "text-[#1a1a1a] dark:text-white"
+                            : "text-[#666666] dark:text-[#999999]"
+                        }`}
+                      >
+                        {use === "mixed-use"
+                          ? "Mixed use"
+                          : use.charAt(0).toUpperCase() + use.slice(1)}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Theme Selection */}
+            <div className="flex flex-col gap-[16px] items-center relative w-full">
+              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+                Select your preferred theme
+              </p>
+              <div className="flex gap-[8px] items-start relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newTheme = "dark";
+                    setPreferredTheme(newTheme);
+                    setTheme(newTheme);
+                    // Force immediate application
+                    if (typeof window !== "undefined") {
+                      document.documentElement.classList.add("dark");
+                    }
+                  }}
+                  className={`border-2 relative rounded-[8px] transition-all duration-300 ${
+                    preferredTheme === "dark"
+                      ? "bg-[rgba(255,255,49,0.2)] border-[rgba(255,255,49,0.75)]"
+                      : "bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                  }`}
+                >
+                  <div className="flex gap-[8px] items-center p-[16px] relative rounded-[inherit]">
+                    <div
+                      className={`relative shrink-0 w-[16px] h-[16px] transition-colors duration-300 ${
+                        preferredTheme === "dark"
+                          ? "text-[#1a1a1a] dark:text-white"
+                          : "text-[#666666] dark:text-[#999999]"
+                      }`}
                     >
-                      <XCircle />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            {passwordState === "error" && errors.password && (
-              <div className="bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden">
-                <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
-                  <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#f2f2f2] font-sans">
-                    <p className="text-[12px] font-semibold">
-                      {errors.password}
-                    </p>
-                    <p className="text-[10px] font-normal">
-                      The password doesn't meet all the requirements.
-                    </p>
-                    <p className="text-[10px] font-normal leading-[1.25]">
-                      • At least 8 characters
-                      <br />
-                      • Letters and numbers
-                      <br />• Optional: symbols or spaces
+                      <Moon />
+                    </div>
+                    <p
+                      className={`text-[12px] font-semibold font-sans text-center transition-colors duration-300 ${
+                        preferredTheme === "dark"
+                          ? "text-[#1a1a1a] dark:text-white"
+                          : "text-[#666666] dark:text-[#999999]"
+                      }`}
+                    >
+                      Dark mode
                     </p>
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Confirm Password Field */}
-          <div className="flex flex-col gap-[16px] items-start relative w-full">
-            <p className="text-[#f2f2f2] text-[12px] font-semibold font-sans">
-              Confirm Password
-            </p>
-            <div className={`bg-gradient-to-t from-[rgba(80,80,80,0.2)] to-[rgba(64,64,64,0.2)] border-2 relative rounded-[8px] w-full transition-all duration-300 ${
-              confirmPasswordState === "error" 
-                ? "border-[#fa8282]" 
-                : confirmPasswordState === "valid"
-                ? "border-[rgba(255,255,255,0.25)]"
-                : "border-[rgba(255,255,255,0.15)]"
-            }`}>
-              <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                  placeholder="Enter your password again"
-                  className="bg-transparent border-none outline-none text-[#f2f2f2] text-[12px] font-semibold font-sans w-full placeholder:text-[#868686] placeholder:opacity-50 transition-opacity duration-200 focus:placeholder:opacity-30"
-                />
-                {confirmPasswordState === "valid" && (
-                  <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                    <Check />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newTheme = "light";
+                    setPreferredTheme(newTheme);
+                    setTheme(newTheme);
+                    // Force immediate application
+                    if (typeof window !== "undefined") {
+                      document.documentElement.classList.remove("dark");
+                    }
+                  }}
+                  className={`border-2 relative rounded-[8px] transition-all duration-300 ${
+                    preferredTheme === "light"
+                      ? "bg-[rgba(255,255,49,0.2)] border-[rgba(255,255,49,0.75)]"
+                      : "bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]"
+                  }`}
+                >
+                  <div className="flex gap-[8px] items-center p-[16px] relative rounded-[inherit]">
+                    <div
+                      className={`relative shrink-0 w-[16px] h-[16px] transition-colors duration-300 ${
+                        preferredTheme === "light"
+                          ? "text-[#1a1a1a] dark:text-white"
+                          : "text-[#666666] dark:text-[#999999]"
+                      }`}
+                    >
+                      <DarkModeToggle />
+                    </div>
+                    <p
+                      className={`text-[12px] font-semibold font-sans text-center transition-colors duration-300 ${
+                        preferredTheme === "light"
+                          ? "text-[#1a1a1a] dark:text-white"
+                          : "text-[#666666] dark:text-[#999999]"
+                      }`}
+                    >
+                      Light mode
+                    </p>
                   </div>
-                )}
-                {confirmPasswordState === "error" && (
-                  <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                    <WarningCircle />
-                  </div>
-                )}
+                </button>
               </div>
             </div>
-            {confirmPasswordState === "error" && errors.confirmPassword && (
-              <div className="bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden">
-                <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
-                  <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#f2f2f2] font-sans">
-                    <p className="text-[12px] font-semibold">
-                      Passwords don't match
-                    </p>
-                    <p className="text-[10px] font-normal">
-                      Double-check your password — the two entries must be the
-                      same.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Continue Button */}
-          <button
-            type="button"
-            disabled={!isFormValid()}
-            className={`w-full flex items-center justify-between px-[16px] py-[20px] rounded-[8px] transition-all duration-300 ${
-              isFormValid()
-                ? "bg-[#ffff31] shadow-[8px_8px_64px_0px_rgba(250,250,130,0.25)] cursor-pointer hover:opacity-90 hover:shadow-[8px_8px_64px_0px_rgba(250,250,130,0.35)] text-[#0d0d0d] transform hover:scale-[1.01]"
-                : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
-            }`}
-          >
-            <div className="w-[16px]" />
-            <p className="text-[14px] font-semibold font-sans transition-opacity duration-300">Continue</p>
-            <div className="relative shrink-0 w-[12px] h-[12px] transition-transform duration-300">
-              <CaretRight />
-            </div>
-          </button>
-        </div>
+            {/* Create Account Button */}
+            <button
+              type="button"
+              onClick={handleCreateAccount}
+              disabled={!isStep2Valid()}
+              className={`w-full flex items-center justify-center px-[16px] py-[16px] rounded-[8px] transition-all duration-300 ${
+                isStep2Valid()
+                  ? "bg-[#ffff31] shadow-[8px_8px_64px_0px_rgba(250,250,130,0.25)] cursor-pointer hover:opacity-90 hover:shadow-[8px_8px_64px_0px_rgba(250,250,130,0.35)] text-[#0d0d0d] transform hover:scale-[1.01]"
+                  : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
+              }`}
+            >
+              <p className="text-[14px] font-semibold font-sans">
+                Create account
+              </p>
+            </button>
+          </div>
+        )}
 
         {/* Login Link */}
         <div className="flex gap-[8px] items-start font-medium text-[12px] font-sans">
-          <p className="text-[#999999]">Already have an account? </p>
-          <Link href="/login" className="underline text-[#ffff31]">
+          <p className="text-[#666666] dark:text-[#999999] transition-colors duration-300">
+            Already have an account?{" "}
+          </p>
+          <Link
+            href="/login"
+            className="underline text-[#ffff31] transition-colors duration-300"
+          >
             Log In
           </Link>
         </div>
