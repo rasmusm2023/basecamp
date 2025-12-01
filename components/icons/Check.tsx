@@ -1,28 +1,20 @@
+import { CheckCircle, Check as PhosphorCheck } from "phosphor-react";
+
 export default function Check() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-full h-full"
-    >
-      <circle
-        cx="8"
-        cy="8"
-        r="7"
-        fill="#1a1a1a"
-        stroke="white"
-        strokeWidth="1"
+    <div className="relative w-full h-full flex items-center justify-center">
+      <CheckCircle
+        size={16}
+        weight="fill"
+        className="absolute"
+        style={{ fill: "#1a1a1a" }}
       />
-      <path
-        d="M5 8L7 10L11 6"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      <PhosphorCheck
+        size={16}
+        weight="fill"
+        className="relative z-10"
+        style={{ color: "white" }}
       />
-    </svg>
+    </div>
   );
 }

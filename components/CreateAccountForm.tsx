@@ -3,15 +3,17 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Header from "./Header";
-import CaretDown from "./icons/CaretDown";
-import CaretRight from "./icons/CaretRight";
-import Check from "./icons/Check";
-import WarningCircle from "./icons/WarningCircle";
-import Info from "./icons/Info";
-import Key from "./icons/Key";
-import XCircle from "./icons/XCircle";
-import Moon from "./icons/Moon";
-import DarkModeToggle from "./icons/DarkModeToggle";
+import {
+  CaretDown,
+  CaretRight,
+  Check,
+  WarningCircle,
+  Info,
+  Key,
+  XCircle,
+  Moon,
+  Sun,
+} from "./icons";
 import { useTheme } from "../contexts/ThemeContext";
 
 type FieldState = "empty" | "valid" | "error";
@@ -258,7 +260,11 @@ export default function CreateAccountForm() {
               Create an account
             </p>
             <div className="relative shrink-0 w-[16px] h-[16px]">
-              <CaretDown />
+              <CaretDown
+                size={16}
+                weight="bold"
+                className="text-[#1a1a1a] dark:text-white transition-colors duration-300"
+              />
             </div>
           </div>
           {step === 1 ? (
@@ -315,7 +321,7 @@ export default function CreateAccountForm() {
                   )}
                   {emailState === "error" && (
                     <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                      <WarningCircle />
+                      <WarningCircle size={16} weight="bold" color="#fa8282" />
                     </div>
                   )}
                 </div>
@@ -344,9 +350,13 @@ export default function CreateAccountForm() {
                 <button
                   type="button"
                   onClick={() => setShowPasswordTooltip(!showPasswordTooltip)}
-                  className="relative shrink-0 w-[10px] h-[10px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
+                  className="relative shrink-0 w-[16px] h-[16px] cursor-pointer hover:opacity-70 transition-opacity duration-200 flex items-center justify-center"
                 >
-                  <Info />
+                  <Info
+                    size={16}
+                    weight="bold"
+                    className="text-[#1a1a1a] dark:text-[#f2f2f2]"
+                  />
                 </button>
               </div>
               <div
@@ -376,7 +386,7 @@ export default function CreateAccountForm() {
                   )}
                   {passwordState === "error" && (
                     <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                      <WarningCircle />
+                      <WarningCircle size={16} weight="bold" color="#fa8282" />
                     </div>
                   )}
                 </div>
@@ -387,7 +397,7 @@ export default function CreateAccountForm() {
                     <div className="flex items-center justify-between relative w-full">
                       <div className="flex gap-[8px] items-center relative">
                         <div className="relative shrink-0 w-[16px] h-[16px] animate-fade-in">
-                          <Key />
+                          <Key size={16} weight="bold" />
                         </div>
                         <div className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-sans leading-[1.25] transition-colors duration-300">
                           <p className="font-semibold mb-0">
@@ -408,7 +418,7 @@ export default function CreateAccountForm() {
                         onClick={() => setShowPasswordTooltip(false)}
                         className="relative shrink-0 w-[16px] h-[16px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
                       >
-                        <XCircle />
+                        <XCircle size={16} weight="bold" />
                       </button>
                     </div>
                   </div>
@@ -470,7 +480,7 @@ export default function CreateAccountForm() {
                   )}
                   {confirmPasswordState === "error" && (
                     <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
-                      <WarningCircle />
+                      <WarningCircle size={16} weight="bold" color="#fa8282" />
                     </div>
                   )}
                 </div>
@@ -507,8 +517,8 @@ export default function CreateAccountForm() {
               <p className="text-[16px] font-semibold font-sans transition-opacity duration-300">
                 Continue
               </p>
-              <div className="relative shrink-0 w-[12px] h-[12px] transition-transform duration-300">
-                <CaretRight />
+              <div className="relative shrink-0 w-[16px] h-[16px] transition-transform duration-300">
+                <CaretRight size={16} weight="bold" />
               </div>
             </button>
           </div>
@@ -646,7 +656,7 @@ export default function CreateAccountForm() {
                           : "text-[#666666] dark:text-[#999999]"
                       }`}
                     >
-                      <Moon />
+                      <Moon size={16} weight="bold" />
                     </div>
                     <p
                       className={`text-[14px] font-semibold font-sans text-center transition-colors duration-300 ${
@@ -684,7 +694,7 @@ export default function CreateAccountForm() {
                           : "text-[#666666] dark:text-[#999999]"
                       }`}
                     >
-                      <DarkModeToggle />
+                      <Sun size={16} weight="bold" />
                     </div>
                     <p
                       className={`text-[14px] font-semibold font-sans text-center transition-colors duration-300 ${
@@ -711,9 +721,7 @@ export default function CreateAccountForm() {
                   : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
               }`}
             >
-              <p className="text-[16px] font-semibold font-sans">
-                Create account
-              </p>
+              <p className="text-[16px] font-bold font-sans">Create account</p>
             </button>
           </div>
         )}
