@@ -3,9 +3,7 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import Header from "./Header";
-import CaretDown from "./icons/CaretDown";
-import CaretRight from "./icons/CaretRight";
-import Check from "./icons/Check";
+import { CaretDown, CaretRight, Check } from "./icons";
 
 type FieldState = "empty" | "valid" | "error";
 
@@ -113,7 +111,7 @@ export default function LoginForm() {
               Log in
             </p>
             <div className="relative shrink-0 w-[16px] h-[16px]">
-              <CaretDown />
+              <CaretDown size={16} weight="bold" color="white" />
             </div>
           </div>
           <h1 className="text-white text-center leading-none font-sans">
@@ -134,12 +132,12 @@ export default function LoginForm() {
             </p>
             <div
               onClick={() => emailInputRef.current?.focus()}
-                className={`bg-gradient-to-t from-[rgba(80,80,80,0.2)] to-[rgba(64,64,64,0.2)] backdrop-blur-sm border relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
-                  emailState === "error"
-                    ? "border-[#fa8282]"
-                    : emailState === "valid"
-                    ? "border-[rgba(255,255,255,0.6)]"
-                    : "border-[rgba(194,194,194,0.25)]"
+              className={`bg-gradient-to-t from-[rgba(80,80,80,0.2)] to-[rgba(64,64,64,0.2)] backdrop-blur-sm border relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
+                emailState === "error"
+                  ? "border-[#fa8282]"
+                  : emailState === "valid"
+                  ? "border-[rgba(255,255,255,0.6)]"
+                  : "border-[rgba(194,194,194,0.25)]"
               } focus-within:border-[rgba(255,255,255,0.6)]`}
             >
               <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
@@ -175,7 +173,7 @@ export default function LoginForm() {
                     : passwordState === "valid"
                     ? "border-[rgba(255,255,255,0.6)]"
                     : "border-[rgba(194,194,194,0.25)]"
-              } focus-within:border-[rgba(255,255,255,0.6)]`}
+                } focus-within:border-[rgba(255,255,255,0.6)]`}
               >
                 <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
                   <input
@@ -208,7 +206,7 @@ export default function LoginForm() {
                 }`}
               >
                 {rememberMe && (
-                  <div className="relative shrink-0 w-[10px] h-[10px] animate-scale-in">
+                  <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
                     <Check />
                   </div>
                 )}
@@ -231,20 +229,18 @@ export default function LoginForm() {
             }`}
           >
             <div className="w-[16px]" />
-            <p className="text-[16px] font-semibold font-sans transition-opacity duration-300">
+            <p className="text-[16px] font-bold font-sans transition-opacity duration-300">
               Log In
             </p>
-            <div className="relative shrink-0 w-[12px] h-[12px] transition-transform duration-300">
-              <CaretRight />
+            <div className="relative shrink-0 w-[16px] h-[16px] transition-transform duration-300">
+              <CaretRight size={16} weight="bold" />
             </div>
           </button>
         </div>
 
         {/* Create Account Link */}
         <div className="flex gap-[8px] items-start font-medium text-[14px] font-sans">
-          <p className="text-[#999999]">
-            New here?{" "}
-          </p>
+          <p className="text-[#999999]">New here? </p>
           <Link
             href="/signup"
             className="underline text-[#ffff31] transition-colors duration-300"
@@ -256,4 +252,3 @@ export default function LoginForm() {
     </div>
   );
 }
-
