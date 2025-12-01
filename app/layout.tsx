@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="en" suppressHydrationWarning className="overscroll-none">
+      <body className={`${inter.variable} font-sans antialiased overscroll-none`}>
         <ThemeScript />
         <ThemeProvider>{children}</ThemeProvider>
       </body>

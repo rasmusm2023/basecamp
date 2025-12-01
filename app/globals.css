@@ -5,6 +5,26 @@
   --font-family-serif: var(--font-inter), serif;
 }
 
+/* Prevent overscroll bounce and set background colors */
+html {
+  overscroll-behavior: none;
+  background-color: #0d0d0d;
+}
+
+html.dark {
+  background-color: #0d0d0d;
+}
+
+html:not(.dark) {
+  background-color: white;
+}
+
+body {
+  overscroll-behavior: none;
+  background-color: inherit;
+  min-height: 100vh;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

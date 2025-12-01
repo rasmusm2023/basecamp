@@ -12,7 +12,12 @@ export default function ThemeScript() {
               } else {
                 root.classList.add('dark');
               }
-            } catch (e) {}
+              // Force reflow for Firefox
+              void root.offsetHeight;
+            } catch (e) {
+              // Default to dark mode if localStorage fails
+              document.documentElement.classList.add('dark');
+            }
           })();
         `,
       }}
