@@ -92,14 +92,16 @@ export default function CreateAccountForm() {
   const getEmailState = (): FieldState => {
     if (!touched.email || !email) return "empty";
     if (errors.email) return "error";
-    if (validateEmail(email)) return "valid";
+    if (email && validateEmail(email)) return "valid";
+    if (email && !validateEmail(email)) return "error";
     return "empty";
   };
 
   const getPasswordState = (): FieldState => {
     if (!touched.password || !password) return "empty";
     if (errors.password) return "error";
-    if (validatePassword(password)) return "valid";
+    if (password && validatePassword(password)) return "valid";
+    if (password && !validatePassword(password)) return "error";
     return "empty";
   };
 
@@ -108,6 +110,8 @@ export default function CreateAccountForm() {
     if (errors.confirmPassword) return "error";
     if (password && confirmPassword && password === confirmPassword)
       return "valid";
+    if (confirmPassword && password && confirmPassword !== password)
+      return "error";
     return "empty";
   };
 
@@ -269,7 +273,7 @@ export default function CreateAccountForm() {
           </div>
           {step === 1 ? (
             <h1 className="text-[#1a1a1a] dark:text-white text-center leading-none font-sans transition-colors duration-300">
-              <span className="font-medium text-[40px]">{`Lets start with the `}</span>
+              <span className="font-medium text-[40px]">{`Let's start with the `}</span>
               <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[44px] font-serif">
                 basics
               </span>
@@ -277,11 +281,14 @@ export default function CreateAccountForm() {
             </h1>
           ) : (
             <h1 className="text-[#1a1a1a] dark:text-white text-center leading-[1.5] max-w-[420px] font-sans transition-colors duration-300">
-              <span className="font-medium text-[40px]">{`Last few questions to improve your `}</span>
-              <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[44px] font-serif">
-                experience
-              </span>
-              <span className="font-medium text-[40px]">.</span>
+              <div className="font-medium text-[40px]">{`Last few questions`}</div>
+              <div className="font-medium text-[40px]">
+                {`to improve your `}
+                <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[44px] font-serif">
+                  experience
+                </span>
+                {`.`}
+              </div>
             </h1>
           )}
         </div>
@@ -326,11 +333,12 @@ export default function CreateAccountForm() {
                   )}
                 </div>
               </div>
-              {emailState === "error" && errors.email && (
+              {(emailState === "error" || errors.email) && (
                 <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
                     <p className="text-[#991b1b] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans transition-colors duration-300">
-                      {errors.email}
+                      {errors.email ||
+                        "Enter a valid email (e.g. name@example.com)"}
                     </p>
                     <p className="text-[#991b1b] dark:text-[#f2f2f2] text-[12px] font-normal font-sans transition-colors duration-300">
                       That email doesn't seem quite right. Mind taking another
@@ -396,8 +404,12 @@ export default function CreateAccountForm() {
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
                     <div className="flex items-center justify-between relative w-full">
                       <div className="flex gap-[8px] items-center relative">
-                        <div className="relative shrink-0 w-[16px] h-[16px] animate-fade-in">
-                          <Key size={16} weight="bold" />
+                        <div className="relative shrink-0 w-[24px] h-[24px] animate-fade-in">
+                          <Key
+                            size={24}
+                            weight="regular"
+                            className="text-white"
+                          />
                         </div>
                         <div className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-sans leading-[1.25] transition-colors duration-300">
                           <p className="font-semibold mb-0">
@@ -416,20 +428,24 @@ export default function CreateAccountForm() {
                       <button
                         type="button"
                         onClick={() => setShowPasswordTooltip(false)}
-                        className="relative shrink-0 w-[16px] h-[16px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
+                        className="relative shrink-0 w-[24px] h-[24px] cursor-pointer hover:opacity-70 transition-opacity duration-200"
                       >
-                        <XCircle size={16} weight="bold" />
+                        <XCircle
+                          size={24}
+                          weight="regular"
+                          className="text-white"
+                        />
                       </button>
                     </div>
                   </div>
                 </div>
               )}
-              {passwordState === "error" && errors.password && (
+              {(passwordState === "error" || errors.password) && (
                 <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
                     <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#991b1b] dark:text-[#f2f2f2] font-sans transition-colors duration-300">
                       <p className="text-[14px] font-semibold">
-                        {errors.password}
+                        {errors.password || "Enter a valid password"}
                       </p>
                       <p className="text-[12px] font-normal">
                         The password doesn't meet all the requirements.
@@ -485,12 +501,12 @@ export default function CreateAccountForm() {
                   )}
                 </div>
               </div>
-              {confirmPasswordState === "error" && errors.confirmPassword && (
+              {(confirmPasswordState === "error" || errors.confirmPassword) && (
                 <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
                     <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#991b1b] dark:text-[#f2f2f2] font-sans transition-colors duration-300">
                       <p className="text-[14px] font-semibold">
-                        Passwords don't match
+                        {errors.confirmPassword || "Passwords don't match"}
                       </p>
                       <p className="text-[12px] font-normal">
                         Double-check your password — the two entries must be the

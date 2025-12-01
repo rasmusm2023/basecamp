@@ -6,8 +6,35 @@ import { Sun, Moon } from "phosphor-react";
 export default function DarkModeToggle() {
   const { theme, setTheme } = useTheme();
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+  const toggleTheme = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newTheme = theme === "dark" ? "light" : "dark";
+    
+    // Force immediate DOM update before React state update
+    // Use requestAnimationFrame for Firefox compatibility
+    if (typeof window !== "undefined") {
+      requestAnimationFrame(() => {
+        const root = document.documentElement;
+        if (newTheme === "dark") {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
+        }
+        // Force reflow for Firefox
+        void root.offsetHeight;
+      });
+      
+      // Also update localStorage immediately with error handling
+      try {
+        localStorage.setItem("preferredTheme", newTheme);
+      } catch (err) {
+        console.warn("Failed to save theme preference:", err);
+      }
+    }
+    
+    // Then update React state
+    setTheme(newTheme);
   };
 
   return (
