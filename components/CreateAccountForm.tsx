@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Header from "./Header";
 import {
   CaretDown,
@@ -15,6 +16,7 @@ import {
   Sun,
 } from "./icons";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 
 type FieldState = "empty" | "valid" | "error";
 type Step = 1 | 2;
@@ -37,7 +39,10 @@ interface FormErrors {
 
 export default function CreateAccountForm() {
   const { theme, setTheme } = useTheme();
+  const { signUp } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<Step>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -234,17 +239,36 @@ export default function CreateAccountForm() {
     }
   };
 
-  const handleCreateAccount = () => {
-    if (isStep2Valid()) {
-      // Handle account creation
-      console.log("Creating account with:", {
-        email,
-        firstName,
-        lastName,
-        intendedUse,
-        preferredTheme,
-      });
-      // TODO: Implement actual account creation
+  const handleCreateAccount = async () => {
+    if (isStep2Valid() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await signUp(email, password, firstName, lastName, {
+          intendedUse,
+          preferredTheme,
+        });
+        router.push("/dashboard");
+      } catch (error: any) {
+        console.error("Error creating account:", error);
+        // Handle Firebase auth errors
+        if (error.code === "auth/email-already-in-use") {
+          setErrors((prev) => ({
+            ...prev,
+            email: "This email is already registered",
+          }));
+        } else if (error.code === "auth/weak-password") {
+          setErrors((prev) => ({
+            ...prev,
+            password: "Password is too weak",
+          }));
+        } else {
+          setErrors((prev) => ({
+            ...prev,
+            email: "Failed to create account. Please try again.",
+          }));
+        }
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -730,14 +754,16 @@ export default function CreateAccountForm() {
             <button
               type="button"
               onClick={handleCreateAccount}
-              disabled={!isStep2Valid()}
+              disabled={!isStep2Valid() || isSubmitting}
               className={`w-full flex items-center justify-center px-[16px] py-[16px] rounded-[8px] transition-all duration-300 ${
-                isStep2Valid()
+                isStep2Valid() && !isSubmitting
                   ? "bg-[#ffff31] shadow-[8px_8px_64px_0px_rgba(250,250,130,0.25)] cursor-pointer hover:opacity-90 hover:shadow-[8px_8px_64px_0px_rgba(250,250,130,0.35)] text-[#0d0d0d] transform hover:scale-[1.01]"
                   : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
               }`}
             >
-              <p className="text-[16px] font-bold font-sans">Create account</p>
+              <p className="text-[16px] font-bold font-sans">
+                {isSubmitting ? "Creating account..." : "Create account"}
+              </p>
             </button>
           </div>
         )}

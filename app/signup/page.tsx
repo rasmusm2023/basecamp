@@ -1,5 +1,10 @@
 import CreateAccountForm from "@/components/CreateAccountForm";
+import AuthRedirect from "@/components/AuthRedirect";
 
 export default function SignUpPage() {
-  return <CreateAccountForm />;
+  return (
+    <AuthRedirect>
+      <CreateAccountForm />
+    </AuthRedirect>
+  );
 }

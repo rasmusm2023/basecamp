@@ -2,15 +2,20 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Header from "./Header";
+import { useAuth } from "../contexts/AuthContext";
 import { CaretDown, CaretRight, Check } from "./icons";
 
 type FieldState = "empty" | "valid" | "error";
 
 export default function LoginForm() {
+  const { signIn } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
@@ -84,15 +89,34 @@ export default function LoginForm() {
     );
   };
 
-  const handleLogin = () => {
-    if (isFormValid()) {
-      // Handle login
-      console.log("Logging in with:", {
-        email,
-        password,
-        rememberMe,
-      });
-      // TODO: Implement actual login
+  const handleLogin = async () => {
+    if (isFormValid() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await signIn(email, password);
+        router.push("/dashboard");
+      } catch (error: any) {
+        console.error("Error logging in:", error);
+        // Handle Firebase auth errors
+        if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+          setErrors((prev) => ({
+            ...prev,
+            email: "Invalid email or password",
+            password: "Invalid email or password",
+          }));
+        } else if (error.code === "auth/invalid-email") {
+          setErrors((prev) => ({
+            ...prev,
+            email: "Invalid email address",
+          }));
+        } else {
+          setErrors((prev) => ({
+            ...prev,
+            email: "Failed to sign in. Please try again.",
+          }));
+        }
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -221,16 +245,16 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={handleLogin}
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || isSubmitting}
             className={`w-full flex items-center justify-between px-[16px] py-[20px] rounded-[8px] transition-all duration-300 ${
-              isFormValid()
+              isFormValid() && !isSubmitting
                 ? "bg-[#ffff31] shadow-[8px_8px_64px_0px_rgba(250,250,130,0.25)] cursor-pointer hover:opacity-90 hover:shadow-[8px_8px_64px_0px_rgba(250,250,130,0.35)] text-[#0d0d0d] transform hover:scale-[1.01]"
                 : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
             }`}
           >
             <div className="w-[16px]" />
             <p className="text-[16px] font-bold font-sans transition-opacity duration-300">
-              Log In
+              {isSubmitting ? "Logging in..." : "Log In"}
             </p>
             <div className="relative shrink-0 w-[16px] h-[16px] transition-transform duration-300">
               <CaretRight size={16} weight="bold" />
