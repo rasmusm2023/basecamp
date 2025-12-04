@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { AuthProvider } from "../contexts/AuthContext";
 import ThemeScript from "../components/ThemeScript";
+import Header from "../components/Header";
+import PageTransition from "../components/PageTransition";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,7 +28,16 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased overscroll-none`}>
         <ThemeScript />
         <AuthProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <div className="flex flex-col min-h-screen">
+              <div className="w-full px-[36px] py-[16px] flex justify-center">
+                <Header />
+              </div>
+              <div className="mt-[100px]">
+                <PageTransition>{children}</PageTransition>
+              </div>
+            </div>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

@@ -1,6 +1,10 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
+import {
+  getFirestore,
+  Firestore,
+  enableIndexedDbPersistence,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -39,6 +43,22 @@ if (isFirebaseConfigured()) {
     // Initialize Firebase services
     auth = getAuth(app);
     db = getFirestore(app);
+
+    // Enable offline persistence (only on client side)
+    if (typeof window !== "undefined") {
+      enableIndexedDbPersistence(db).catch((err) => {
+        // Persistence can only be enabled in a single tab at a time
+        if (err.code === "failed-precondition") {
+          console.warn("Firestore persistence already enabled in another tab");
+        } else if (err.code === "unimplemented") {
+          console.warn(
+            "Firestore persistence is not supported in this browser"
+          );
+        } else {
+          console.warn("Error enabling Firestore persistence:", err);
+        }
+      });
+    }
   } catch (error) {
     console.error("Firebase initialization error:", error);
   }
