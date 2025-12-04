@@ -1,19 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import Header from "./Header";
 
 export default function Dashboard() {
   return (
     <div className="bg-white dark:bg-[#0d0d0d] box-border flex flex-col gap-[100px] items-center px-[36px] py-[16px] min-h-screen w-full transition-colors duration-300">
-      <Header />
-
       <div className="flex flex-col gap-[64px] items-center max-w-[1400px] relative w-full">
         {/* Welcome Section */}
         <div className="flex flex-col gap-[24px] items-center relative">
           <h1 className="text-[#1a1a1a] dark:text-white text-center leading-none font-sans transition-colors duration-300">
             <span className="font-medium text-[40px]">{`Welcome to your `}</span>
-            <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[44px] font-serif">
+            <span className="text-gradient-basecamp italic text-[44px] font-serif">
               basecamp
             </span>
             <span className="font-medium text-[40px]">.</span>

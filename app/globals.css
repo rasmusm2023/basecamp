@@ -5,18 +5,134 @@
   --font-family-serif: var(--font-inter), serif;
 }
 
+/* Color System - CSS Custom Properties */
+:root {
+  /* Background Colors - Light Mode (from Figma 38-891) */
+  --color-bg-primary: #f2f2f2;
+  --color-bg-secondary: #ffffff;
+  --color-bg-dark: #0d0d0d;
+
+  /* Text Colors - Light Mode (from Figma 38-891) */
+  --color-text-primary: #0d0d0d;
+  --color-text-secondary: #303030;
+  --color-text-tertiary: #999999;
+  --color-text-placeholder: #999999;
+  --color-text-inverse: #f2f2f2;
+  --color-text-light: #f2f2f2;
+
+  /* Border Colors - Light Mode (from Figma 38-922) */
+  --color-border-default: rgba(13, 13, 13, 0.15);
+  --color-border-focus: rgba(13, 13, 13, 0.3);
+  --color-border-error: #fa8282;
+
+  /* Input Background Colors - Light Mode (from Figma 38-922) */
+  --color-input-bg-start: #ffffff;
+  --color-input-bg-end: #ffffff;
+
+  /* Accent Colors - Light Mode (from Figma 38-952) */
+  --color-accent-primary: #ffff31;
+  --color-accent-hover: rgba(255, 255, 49, 0.4);
+  --color-accent-selected: rgba(255, 255, 49, 0.2);
+  --color-accent-border: rgba(255, 255, 49, 0.75);
+
+  /* Selected Button Colors - Light Mode (from Figma 38-891: dark gradient) */
+  --color-selected-bg-start: #0d0d0d;
+  --color-selected-bg-end: #505050;
+  --color-selected-border: rgba(13, 13, 13, 0.3);
+  --color-selected-text: #f2f2f2;
+
+  /* Unselected Button Colors - Light Mode (from Figma 38-891) */
+  --color-unselected-bg: #ffffff;
+  --color-unselected-border: rgba(13, 13, 13, 0.15);
+  --color-unselected-text: #999999;
+
+  /* Gradient Colors - Light Mode (black to gray) */
+  --color-gradient-start: #000000;
+  --color-gradient-mid: #666666;
+  --color-gradient-end: #999999;
+
+  /* Shadow Colors - Light Mode (from Figma 38-952) */
+  --color-shadow-accent: rgba(0, 0, 0, 0.16);
+  --color-shadow-accent-hover: rgba(0, 0, 0, 0.2);
+
+  /* Error Colors */
+  --color-error-bg: #fee2e2;
+  --color-error-text: #991b1b;
+}
+
+html.dark,
+.dark {
+  /* Background Colors - Dark Mode (from LoginForm) */
+  --color-bg-primary: #0d0d0d;
+  --color-bg-secondary: #0d0d0d;
+  --color-bg-dark: #0d0d0d;
+
+  /* Text Colors - Dark Mode (from LoginForm) */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #f2f2f2;
+  --color-text-tertiary: #999999;
+  --color-text-placeholder: #868686;
+  --color-text-inverse: #0d0d0d;
+  --color-text-light: #f2f2f2;
+
+  /* Border Colors - Dark Mode (from Figma 38-845) */
+  --color-border-default: rgba(255, 255, 255, 0.15);
+  --color-border-focus: rgba(255, 255, 255, 0.6);
+  --color-border-error: #fa8282;
+
+  /* Input Background Colors - Dark Mode (from Figma 38-845) */
+  --color-input-bg-start: rgba(80, 80, 80, 0.2);
+  --color-input-bg-end: rgba(64, 64, 64, 0.2);
+
+  /* Accent Colors - Dark Mode (from Figma 38-968) */
+  --color-accent-primary: #ffff31;
+  --color-accent-hover: rgba(255, 255, 49, 0.4);
+  --color-accent-selected: rgba(255, 255, 49, 0.2);
+  --color-accent-border: rgba(255, 255, 49, 0.75);
+
+  /* Selected Button Colors - Dark Mode (from LoginForm: yellow with white text) */
+  --color-selected-bg-start: rgba(255, 255, 49, 0.2);
+  --color-selected-bg-end: rgba(255, 255, 49, 0.2);
+  --color-selected-border: rgba(255, 255, 49, 0.75);
+  --color-selected-text: #ffffff;
+
+  /* Unselected Button Colors - Dark Mode (from LoginForm: gradient with gray text) */
+  --color-unselected-bg: rgba(80, 80, 80, 0.2);
+  --color-unselected-border: rgba(194, 194, 194, 0.25);
+  --color-unselected-text: #999999;
+
+  /* Gradient Colors - Dark Mode (green/blue) */
+  --color-gradient-start: #d4e8a0;
+  --color-gradient-mid: #a8d5ba;
+  --color-gradient-end: #5a9c76;
+
+  /* Shadow Colors - Dark Mode (from Figma 38-968) */
+  --color-shadow-accent: rgba(250, 250, 130, 0.25);
+  --color-shadow-accent-hover: rgba(250, 250, 130, 0.35);
+
+  /* Error Colors - Dark Mode */
+  --color-error-bg: #a34646;
+  --color-error-text: #f2f2f2;
+}
+
 /* Prevent overscroll bounce and set background colors */
 html {
   overscroll-behavior: none;
-  background-color: #0d0d0d;
-}
-
-html.dark {
-  background-color: #0d0d0d;
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-primary);
 }
 
 html:not(.dark) {
-  background-color: white;
+  background-color: var(--color-bg-primary);
+}
+
+/* Light mode specific - ensure white backgrounds for inputs */
+:root {
+  --color-input-bg: #ffffff;
+}
+
+.dark {
+  --color-input-bg: var(--color-input-bg-start);
 }
 
 body {
@@ -30,6 +146,7 @@ body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -40,6 +157,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -50,6 +168,7 @@ body {
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -79,12 +198,76 @@ input:focus-visible::placeholder {
   opacity: 0.3;
 }
 
-/* Dark mode placeholder colors */
-.dark input::placeholder {
-  color: #868686;
-}
-
+/* Placeholder colors */
 input::placeholder {
-  color: #666666;
+  color: var(--color-text-placeholder);
 }
 
+/* Page Transitions */
+.page-transition {
+  width: 100%;
+  min-height: calc(100vh - 100px);
+  transition: opacity 0.3s ease-in-out;
+  will-change: opacity;
+}
+
+.page-transition-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.page-transition-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Input field background gradient */
+.input-bg-gradient {
+  background: linear-gradient(to top, var(--color-input-bg-start), var(--color-input-bg-end));
+}
+
+/* Stylized text gradient */
+.text-gradient-basecamp {
+  background: linear-gradient(91deg, var(--color-gradient-start) 0.13%, var(--color-gradient-end) 99.87%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Input field border colors */
+.input-border-default {
+  border-color: var(--color-border-default);
+}
+
+.input-border-default:focus-within {
+  border-color: var(--color-border-focus) !important;
+}
+
+.input-border-focus {
+  border-color: var(--color-border-focus);
+}
+
+.input-border-error {
+  border-color: var(--color-border-error);
+}
+
+/* CTA Button styles */
+.btn-cta {
+  background-color: var(--color-accent-primary);
+  box-shadow: 8px 8px 64px 0px var(--color-shadow-accent);
+  color: #0d0d0d;
+}
+
+.btn-cta:hover:not(:disabled):not(.btn-cta-disabled) {
+  opacity: 0.9;
+  box-shadow: 8px 8px 64px 0px var(--color-shadow-accent-hover);
+  transform: scale(1.01);
+}
+
+.btn-cta:disabled,
+.btn-cta-disabled {
+  background-color: var(--color-accent-hover);
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #0d0d0d;
+}

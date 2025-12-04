@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Header from "./Header";
 import {
   CaretDown,
   CaretRight,
@@ -277,41 +276,39 @@ export default function CreateAccountForm() {
   const confirmPasswordState = getConfirmPasswordState();
 
   return (
-    <div className="bg-white dark:bg-[#0d0d0d] box-border flex flex-col gap-[100px] items-center px-[36px] py-[16px] min-h-screen w-full transition-colors duration-300">
-      <Header />
-
-      <div className="flex flex-col gap-[64px] items-center max-w-[480px] relative w-full">
+    <div className="bg-bg-secondary dark:bg-bg-primary box-border flex flex-col gap-[100px] items-center px-[36px] py-[16px] min-h-screen w-full transition-colors duration-300">
+      <div className="flex flex-col gap-[64px] items-center max-w-[600px] relative w-full">
         {/* Title Section */}
         <div className="flex flex-col gap-[16px] items-center relative">
           <div className="flex flex-col gap-[17px] items-center">
-            <p className="text-[#1a1a1a] dark:text-white text-[24px] text-center font-light font-sans transition-colors duration-300">
+            <p className="text-text-primary text-[24px] text-center font-light font-sans transition-colors duration-300">
               Create an account
             </p>
             <div className="relative shrink-0 w-[16px] h-[16px]">
               <CaretDown
                 size={16}
                 weight="bold"
-                className="text-[#1a1a1a] dark:text-white transition-colors duration-300"
+                className="text-text-primary transition-colors duration-300"
               />
             </div>
           </div>
           {step === 1 ? (
-            <h1 className="text-[#1a1a1a] dark:text-white text-center leading-none font-sans transition-colors duration-300">
+            <h1 className="text-text-primary text-center leading-none font-sans transition-colors duration-300">
               <span className="font-medium text-[40px]">{`Let's start with the `}</span>
-              <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[44px] font-serif">
+              <span className="text-gradient-basecamp italic text-[44px] font-serif">
                 basics
               </span>
               <span className="font-medium text-[40px]">.</span>
             </h1>
           ) : (
-            <h1 className="text-[#1a1a1a] dark:text-white text-center leading-[1.5] max-w-[420px] font-sans transition-colors duration-300">
-              <div className="font-medium text-[40px]">{`Last few questions`}</div>
+            <h1 className="text-text-primary text-center leading-normal font-sans transition-colors duration-300">
+              <div className="font-medium text-[40px]">{`Last few questions to improve`}</div>
               <div className="font-medium text-[40px]">
-                {`to improve your `}
-                <span className="bg-gradient-to-r from-[#d4e8a0] via-[#a8d5ba] to-[#5a9c76] bg-clip-text text-transparent italic text-[44px] font-serif">
+                {`your `}
+                <span className="text-gradient-basecamp italic text-[44px] font-serif">
                   experience
                 </span>
-                {`.`}
+                <span className="font-medium text-[40px]">.</span>
               </div>
             </h1>
           )}
@@ -322,18 +319,18 @@ export default function CreateAccountForm() {
           <div className="flex flex-col gap-[36px] items-start relative w-full">
             {/* Email Field */}
             <div className="flex flex-col gap-[8px] items-start relative w-full">
-              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans transition-colors duration-300">
+              <p className="text-text-secondary text-[14px] font-semibold font-sans transition-colors duration-300">
                 Email
               </p>
               <div
                 onClick={() => emailInputRef.current?.focus()}
-                className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] backdrop-blur-sm border relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
+                className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
                   emailState === "error"
-                    ? "border-[#fa8282]"
+                    ? "input-border-error"
                     : emailState === "valid"
-                    ? "border-[rgba(26,26,26,0.5)] dark:border-[rgba(255,255,255,0.6)]"
-                    : "border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
-                } focus-within:border-[rgba(26,26,26,0.5)] dark:focus-within:border-[rgba(255,255,255,0.6)]`}
+                    ? "input-border-focus"
+                    : "input-border-default"
+                }`}
               >
                 <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
                   <input
@@ -341,9 +338,20 @@ export default function CreateAccountForm() {
                     type="email"
                     value={email}
                     onChange={(e) => handleEmailChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        password &&
+                        confirmPassword &&
+                        isStep1Valid()
+                      ) {
+                        e.preventDefault();
+                        handleContinue();
+                      }
+                    }}
                     onClick={(e) => e.stopPropagation()}
-                    placeholder="your@email.com"
-                    className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] cursor-text"
+                    placeholder="Your@email.com"
+                    className="bg-transparent border-none outline-none text-text-secondary text-[14px] font-semibold font-sans w-full placeholder:text-text-placeholder cursor-text"
                   />
                   {emailState === "valid" && (
                     <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
@@ -358,13 +366,13 @@ export default function CreateAccountForm() {
                 </div>
               </div>
               {(emailState === "error" || errors.email) && (
-                <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
+                <div className="bg-error-bg border input-border-error relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
-                    <p className="text-[#991b1b] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans transition-colors duration-300">
+                    <p className="text-error-text text-[14px] font-semibold font-sans transition-colors duration-300">
                       {errors.email ||
                         "Enter a valid email (e.g. name@example.com)"}
                     </p>
-                    <p className="text-[#991b1b] dark:text-[#f2f2f2] text-[12px] font-normal font-sans transition-colors duration-300">
+                    <p className="text-error-text text-[12px] font-normal font-sans transition-colors duration-300">
                       That email doesn't seem quite right. Mind taking another
                       look?
                     </p>
@@ -376,7 +384,7 @@ export default function CreateAccountForm() {
             {/* Password Field */}
             <div className="flex flex-col gap-[8px] items-start relative w-full">
               <div className="flex gap-[8px] items-center relative">
-                <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans transition-colors duration-300">
+                <p className="text-text-secondary text-[14px] font-semibold font-sans transition-colors duration-300">
                   Password
                 </p>
                 <button
@@ -384,22 +392,18 @@ export default function CreateAccountForm() {
                   onClick={() => setShowPasswordTooltip(!showPasswordTooltip)}
                   className="relative shrink-0 w-[16px] h-[16px] cursor-pointer hover:opacity-70 transition-opacity duration-200 flex items-center justify-center"
                 >
-                  <Info
-                    size={16}
-                    weight="bold"
-                    className="text-[#1a1a1a] dark:text-[#f2f2f2]"
-                  />
+                  <Info size={16} weight="bold" className="text-text-primary" />
                 </button>
               </div>
               <div
                 onClick={() => passwordInputRef.current?.focus()}
-                className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] backdrop-blur-sm border relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
+                className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
                   passwordState === "error"
-                    ? "border-[#fa8282]"
+                    ? "input-border-error"
                     : passwordState === "valid"
-                    ? "border-[rgba(26,26,26,0.5)] dark:border-[rgba(255,255,255,0.6)]"
-                    : "border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
-                } focus-within:border-[rgba(26,26,26,0.5)] dark:focus-within:border-[rgba(255,255,255,0.6)]`}
+                    ? "input-border-focus border-2"
+                    : "input-border-default"
+                } focus-within:input-border-focus focus-within:border-2`}
               >
                 <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
                   <input
@@ -407,9 +411,19 @@ export default function CreateAccountForm() {
                     type="password"
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        confirmPassword &&
+                        isStep1Valid()
+                      ) {
+                        e.preventDefault();
+                        handleContinue();
+                      }
+                    }}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="Choose a password"
-                    className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] cursor-text"
+                    className="bg-transparent border-none outline-none text-text-secondary text-[14px] font-semibold font-sans w-full placeholder:text-text-placeholder cursor-text"
                   />
                   {passwordState === "valid" && (
                     <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
@@ -424,7 +438,7 @@ export default function CreateAccountForm() {
                 </div>
               </div>
               {showPasswordTooltip && (
-                <div className="bg-[rgba(255,255,49,0.25)] border border-[#ffff31] relative rounded-[8px] w-full animate-slide-down overflow-hidden">
+                <div className="bg-accent-selected border border-accent-border relative rounded-[8px] w-full animate-slide-down overflow-hidden">
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
                     <div className="flex items-center justify-between relative w-full">
                       <div className="flex gap-[8px] items-center relative">
@@ -435,7 +449,7 @@ export default function CreateAccountForm() {
                             className="text-white"
                           />
                         </div>
-                        <div className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-sans leading-[1.25] transition-colors duration-300">
+                        <div className="text-text-primary text-[12px] font-sans leading-[1.25] transition-colors duration-300">
                           <p className="font-semibold mb-0">
                             Password must include:
                             <br />
@@ -465,9 +479,9 @@ export default function CreateAccountForm() {
                 </div>
               )}
               {(passwordState === "error" || errors.password) && (
-                <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
+                <div className="bg-error-bg border input-border-error relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
-                    <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#991b1b] dark:text-[#f2f2f2] font-sans transition-colors duration-300">
+                    <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-error-text font-sans transition-colors duration-300">
                       <p className="text-[14px] font-semibold">
                         {errors.password || "Enter a valid password"}
                       </p>
@@ -488,18 +502,18 @@ export default function CreateAccountForm() {
 
             {/* Confirm Password Field */}
             <div className="flex flex-col gap-[8px] items-start relative w-full">
-              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans transition-colors duration-300">
+              <p className="text-text-secondary text-[14px] font-semibold font-sans transition-colors duration-300">
                 Confirm Password
               </p>
               <div
                 onClick={() => confirmPasswordInputRef.current?.focus()}
-                className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] backdrop-blur-sm border relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
+                className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
                   confirmPasswordState === "error"
-                    ? "border-[#fa8282]"
+                    ? "input-border-error"
                     : confirmPasswordState === "valid"
-                    ? "border-[rgba(26,26,26,0.5)] dark:border-[rgba(255,255,255,0.6)]"
-                    : "border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
-                } focus-within:border-[rgba(26,26,26,0.5)] dark:focus-within:border-[rgba(255,255,255,0.6)]`}
+                    ? "input-border-focus border-2"
+                    : "input-border-default"
+                } focus-within:input-border-focus focus-within:border-2`}
               >
                 <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
                   <input
@@ -509,9 +523,15 @@ export default function CreateAccountForm() {
                     onChange={(e) =>
                       handleConfirmPasswordChange(e.target.value)
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && isStep1Valid()) {
+                        e.preventDefault();
+                        handleContinue();
+                      }
+                    }}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="Enter your password again"
-                    className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] cursor-text"
+                    className="bg-transparent border-none outline-none text-text-secondary text-[14px] font-semibold font-sans w-full placeholder:text-text-placeholder cursor-text"
                   />
                   {confirmPasswordState === "valid" && (
                     <div className="relative shrink-0 w-[16px] h-[16px] animate-scale-in">
@@ -526,9 +546,9 @@ export default function CreateAccountForm() {
                 </div>
               </div>
               {(confirmPasswordState === "error" || errors.confirmPassword) && (
-                <div className="bg-[#fee2e2] dark:bg-[#a34646] border border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
+                <div className="bg-error-bg border input-border-error relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
                   <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
-                    <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-[#991b1b] dark:text-[#f2f2f2] font-sans transition-colors duration-300">
+                    <div className="flex flex-col gap-[8px] items-start justify-center leading-none text-error-text font-sans transition-colors duration-300">
                       <p className="text-[14px] font-semibold">
                         {errors.confirmPassword || "Passwords don't match"}
                       </p>
@@ -548,9 +568,7 @@ export default function CreateAccountForm() {
               onClick={handleContinue}
               disabled={!isStep1Valid()}
               className={`w-full flex items-center justify-between px-[16px] py-[20px] rounded-[8px] transition-all duration-300 ${
-                isStep1Valid()
-                  ? "bg-[#ffff31] shadow-[8px_8px_64px_0px_rgba(250,250,130,0.25)] cursor-pointer hover:opacity-90 hover:shadow-[8px_8px_64px_0px_rgba(250,250,130,0.35)] text-[#0d0d0d] transform hover:scale-[1.01]"
-                  : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
+                isStep1Valid() ? "btn-cta cursor-pointer" : "btn-cta-disabled"
               }`}
             >
               <div className="w-[16px]" />
@@ -563,22 +581,22 @@ export default function CreateAccountForm() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-[64px] items-start relative w-full">
+          <div className="flex flex-col gap-[64px] items-start relative w-full max-w-[600px]">
             {/* First Name and Last Name Fields */}
             <div className="flex gap-[16px] items-start justify-center relative w-full">
               <div className="basis-0 flex flex-col gap-[8px] grow items-start min-h-px min-w-px relative">
-                <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+                <p className="text-text-secondary text-[12px] font-semibold font-sans text-center transition-colors duration-300">
                   First name
                 </p>
                 <div
                   onClick={() => firstNameInputRef.current?.focus()}
-                  className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] backdrop-blur-sm border relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
+                  className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
                     errors.firstName
-                      ? "border-[#fa8282]"
+                      ? "input-border-error"
                       : firstName.trim().length > 0
-                      ? "border-[rgba(26,26,26,0.5)] dark:border-[rgba(255,255,255,0.6)]"
-                      : "border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
-                  } focus-within:border-[rgba(26,26,26,0.5)] dark:focus-within:border-[rgba(255,255,255,0.6)]`}
+                      ? "input-border-focus border-2"
+                      : "input-border-default"
+                  } focus-within:input-border-focus focus-within:border-2`}
                 >
                   <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
                     <input
@@ -586,26 +604,32 @@ export default function CreateAccountForm() {
                       type="text"
                       value={firstName}
                       onChange={(e) => handleFirstNameChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && lastName && isStep2Valid()) {
+                          e.preventDefault();
+                          handleCreateAccount();
+                        }
+                      }}
                       onClick={(e) => e.stopPropagation()}
                       placeholder="Jane"
-                      className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] cursor-text"
+                      className="bg-transparent border-none outline-none text-text-secondary text-[14px] font-semibold font-sans w-full placeholder:text-text-placeholder cursor-text"
                     />
                   </div>
                 </div>
               </div>
               <div className="basis-0 flex flex-col gap-[8px] grow items-start min-h-px min-w-px relative">
-                <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+                <p className="text-text-secondary text-[12px] font-semibold font-sans text-center transition-colors duration-300">
                   Last name
                 </p>
                 <div
                   onClick={() => lastNameInputRef.current?.focus()}
-                  className={`bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] backdrop-blur-sm border relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
+                  className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
                     errors.lastName
-                      ? "border-[#fa8282]"
+                      ? "input-border-error"
                       : lastName.trim().length > 0
-                      ? "border-[rgba(26,26,26,0.5)] dark:border-[rgba(255,255,255,0.6)]"
-                      : "border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
-                  } focus-within:border-[rgba(26,26,26,0.5)] dark:focus-within:border-[rgba(255,255,255,0.6)]`}
+                      ? "input-border-focus border-2"
+                      : "input-border-default"
+                  } focus-within:input-border-focus focus-within:border-2`}
                 >
                   <div className="flex items-center justify-between p-[16px] relative rounded-[inherit] w-full">
                     <input
@@ -613,9 +637,15 @@ export default function CreateAccountForm() {
                       type="text"
                       value={lastName}
                       onChange={(e) => handleLastNameChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && isStep2Valid()) {
+                          e.preventDefault();
+                          handleCreateAccount();
+                        }
+                      }}
                       onClick={(e) => e.stopPropagation()}
                       placeholder="Doe"
-                      className="bg-transparent border-none outline-none text-[#1a1a1a] dark:text-[#f2f2f2] text-[14px] font-semibold font-sans w-full placeholder:text-[#666666] dark:placeholder:text-[#868686] cursor-text"
+                      className="bg-transparent border-none outline-none text-text-secondary text-[14px] font-semibold font-sans w-full placeholder:text-text-placeholder cursor-text"
                     />
                   </div>
                 </div>
@@ -624,10 +654,10 @@ export default function CreateAccountForm() {
 
             {/* Intended Use Selection */}
             <div className="flex flex-col gap-[16px] items-center relative w-full">
-              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+              <p className="text-text-secondary text-[12px] font-semibold font-sans text-center transition-colors duration-300">
                 What best describes your intended use
               </p>
-              <div className="flex gap-[8px] items-start relative flex-wrap">
+              <div className="flex gap-[8px] items-start relative flex-nowrap w-full justify-center">
                 {(
                   [
                     "work",
@@ -643,16 +673,16 @@ export default function CreateAccountForm() {
                     onClick={() => setIntendedUse(use)}
                     className={`border relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
                       intendedUse === use
-                        ? "bg-[rgba(255,255,49,0.2)] border-[rgba(255,255,49,0.75)]"
-                        : "bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
+                        ? "bg-gradient-to-r from-selected-bg-start to-selected-bg-end border-selected-border border-2"
+                        : "input-bg-gradient input-border-default"
                     }`}
                   >
                     <div className="flex gap-[8px] items-center p-[16px] relative rounded-[inherit]">
                       <p
                         className={`text-[14px] font-semibold font-sans text-center whitespace-nowrap transition-colors duration-300 ${
                           intendedUse === use
-                            ? "text-[#1a1a1a] dark:text-white"
-                            : "text-[#666666] dark:text-[#999999]"
+                            ? "text-selected-text"
+                            : "text-text-tertiary"
                         }`}
                       >
                         {use === "mixed-use"
@@ -667,7 +697,7 @@ export default function CreateAccountForm() {
 
             {/* Theme Selection */}
             <div className="flex flex-col gap-[16px] items-center relative w-full">
-              <p className="text-[#1a1a1a] dark:text-[#f2f2f2] text-[12px] font-semibold font-sans text-center transition-colors duration-300">
+              <p className="text-text-secondary text-[12px] font-semibold font-sans text-center transition-colors duration-300">
                 Select your preferred theme
               </p>
               <div className="flex gap-[8px] items-start relative">
@@ -684,16 +714,16 @@ export default function CreateAccountForm() {
                   }}
                   className={`border relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
                     preferredTheme === "dark"
-                      ? "bg-[rgba(255,255,49,0.2)] border-[rgba(255,255,49,0.75)]"
-                      : "bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
+                      ? "bg-gradient-to-r from-selected-bg-start to-selected-bg-end border-selected-border border-2 dark:border"
+                      : "bg-gradient-to-t from-input-bg-start to-input-bg-end input-border-default"
                   }`}
                 >
                   <div className="flex gap-[8px] items-center p-[16px] relative rounded-[inherit]">
                     <div
                       className={`relative shrink-0 w-[16px] h-[16px] transition-colors duration-300 ${
                         preferredTheme === "dark"
-                          ? "text-[#1a1a1a] dark:text-white"
-                          : "text-[#666666] dark:text-[#999999]"
+                          ? "text-selected-text"
+                          : "text-text-tertiary"
                       }`}
                     >
                       <Moon size={16} weight="bold" />
@@ -701,8 +731,8 @@ export default function CreateAccountForm() {
                     <p
                       className={`text-[14px] font-semibold font-sans text-center transition-colors duration-300 ${
                         preferredTheme === "dark"
-                          ? "text-[#1a1a1a] dark:text-white"
-                          : "text-[#666666] dark:text-[#999999]"
+                          ? "text-selected-text"
+                          : "text-text-tertiary"
                       }`}
                     >
                       Dark mode
@@ -722,16 +752,16 @@ export default function CreateAccountForm() {
                   }}
                   className={`border relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
                     preferredTheme === "light"
-                      ? "bg-[rgba(255,255,49,0.2)] border-[rgba(255,255,49,0.75)]"
-                      : "bg-gradient-to-t from-[rgba(240,240,240,0.8)] to-[rgba(250,250,250,0.8)] dark:from-[rgba(80,80,80,0.2)] dark:to-[rgba(64,64,64,0.2)] border-[rgba(26,26,26,0.25)] dark:border-[rgba(194,194,194,0.25)]"
+                      ? "bg-gradient-to-r from-selected-bg-start to-selected-bg-end border-selected-border border-2 dark:border"
+                      : "bg-gradient-to-t from-input-bg-start to-input-bg-end input-border-default"
                   }`}
                 >
                   <div className="flex gap-[8px] items-center p-[16px] relative rounded-[inherit]">
                     <div
                       className={`relative shrink-0 w-[16px] h-[16px] transition-colors duration-300 ${
                         preferredTheme === "light"
-                          ? "text-[#1a1a1a] dark:text-white"
-                          : "text-[#666666] dark:text-[#999999]"
+                          ? "text-selected-text"
+                          : "text-text-tertiary"
                       }`}
                     >
                       <Sun size={16} weight="bold" />
@@ -739,8 +769,8 @@ export default function CreateAccountForm() {
                     <p
                       className={`text-[14px] font-semibold font-sans text-center transition-colors duration-300 ${
                         preferredTheme === "light"
-                          ? "text-[#1a1a1a] dark:text-white"
-                          : "text-[#666666] dark:text-[#999999]"
+                          ? "text-selected-text"
+                          : "text-text-tertiary"
                       }`}
                     >
                       Light mode
@@ -757,8 +787,8 @@ export default function CreateAccountForm() {
               disabled={!isStep2Valid() || isSubmitting}
               className={`w-full flex items-center justify-center px-[16px] py-[16px] rounded-[8px] transition-all duration-300 ${
                 isStep2Valid() && !isSubmitting
-                  ? "bg-[#ffff31] shadow-[8px_8px_64px_0px_rgba(250,250,130,0.25)] cursor-pointer hover:opacity-90 hover:shadow-[8px_8px_64px_0px_rgba(250,250,130,0.35)] text-[#0d0d0d] transform hover:scale-[1.01]"
-                  : "bg-[rgba(255,255,49,0.4)] cursor-not-allowed text-[#0d0d0d]"
+                  ? "btn-cta cursor-pointer"
+                  : "btn-cta-disabled"
               }`}
             >
               <p className="text-[16px] font-bold font-sans">
@@ -770,12 +800,12 @@ export default function CreateAccountForm() {
 
         {/* Login Link */}
         <div className="flex gap-[8px] items-start font-medium text-[14px] font-sans">
-          <p className="text-[#666666] dark:text-[#999999] transition-colors duration-300">
+          <p className="text-text-tertiary transition-colors duration-300">
             Already have an account?{" "}
           </p>
           <Link
             href="/login"
-            className="underline text-[#ffff31] transition-colors duration-300"
+            className="underline text-accent-primary transition-colors duration-300"
           >
             Log In
           </Link>

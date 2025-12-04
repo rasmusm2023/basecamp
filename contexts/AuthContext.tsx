@@ -73,7 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userDoc.exists()) {
         return userDoc.data() as UserData;
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Handle offline errors gracefully - don't log them as errors
+      // Firebase will automatically retry when connection is restored
+      if (error?.code === "unavailable" || error?.message?.includes("offline")) {
+        // Silently handle offline errors - Firebase will retry automatically
+        return null;
+      }
+      // Only log unexpected errors
       console.error("Error fetching user data:", error);
     }
     return null;
@@ -172,7 +179,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserData((prev) => 
         prev ? { ...prev, preferredTheme: theme, updatedAt: new Date().toISOString() } : null
       );
-    } catch (error) {
+    } catch (error: any) {
+      // Handle offline errors gracefully
+      if (error?.code === "unavailable" || error?.message?.includes("offline")) {
+        // Still update local state even if offline - will sync when connection is restored
+        setUserData((prev) => 
+          prev ? { ...prev, preferredTheme: theme, updatedAt: new Date().toISOString() } : null
+        );
+        // Firebase will automatically retry when connection is restored
+        return;
+      }
+      // Only log unexpected errors
       console.error("Error updating user theme:", error);
     }
   };
