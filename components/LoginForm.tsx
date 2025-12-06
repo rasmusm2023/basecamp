@@ -18,6 +18,8 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [showErrorBorders, setShowErrorBorders] = useState(false);
   const [touched, setTouched] = useState({
     email: false,
     password: false,
@@ -47,13 +49,21 @@ export default function LoginForm() {
   const handleEmailChange = (value: string) => {
     setEmail(value);
     setTouched((prev) => ({ ...prev, email: true }));
-    // Don't set errors in login form - no validation warnings
   };
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setTouched((prev) => ({ ...prev, password: true }));
-    // Don't set errors in login form - no validation warnings
+  };
+
+  const handleEmailFocus = () => {
+    // Clear error borders when user focuses on email field (but keep errors for tooltip)
+    setShowErrorBorders(false);
+  };
+
+  const handlePasswordFocus = () => {
+    // Clear error borders when user focuses on password field (but keep errors for tooltip)
+    setShowErrorBorders(false);
   };
 
   const isFormValid = () => {
@@ -63,33 +73,46 @@ export default function LoginForm() {
 
   const handleLogin = async () => {
     if (isFormValid() && !isSubmitting) {
+      setHasSubmitted(true);
       setIsSubmitting(true);
+      // Clear previous errors
+      setErrors({});
+      setShowErrorBorders(false);
       try {
-        await signIn(email, password);
+        await signIn(email, password, rememberMe);
         router.push("/dashboard");
       } catch (error: any) {
-        console.error("Error logging in:", error);
         // Handle Firebase auth errors
+        // Firebase v9+ errors have error.code, but we also check error.message as fallback
+        const errorCode = error?.code;
+        const errorMessage = error?.message || "";
+        
+        // Handle credential errors (expected user behavior - don't log to console)
         if (
-          error.code === "auth/invalid-credential" ||
-          error.code === "auth/user-not-found" ||
-          error.code === "auth/wrong-password"
+          errorCode === "auth/invalid-credential" ||
+          errorCode === "auth/user-not-found" ||
+          errorCode === "auth/wrong-password" ||
+          errorMessage.includes("invalid-credential") ||
+          errorMessage.includes("user-not-found") ||
+          errorMessage.includes("wrong-password")
         ) {
-          setErrors((prev) => ({
-            ...prev,
+          setErrors({
             email: "Invalid email or password",
             password: "Invalid email or password",
-          }));
-        } else if (error.code === "auth/invalid-email") {
-          setErrors((prev) => ({
-            ...prev,
+          });
+          setShowErrorBorders(true);
+        } else if (errorCode === "auth/invalid-email" || errorMessage.includes("invalid-email")) {
+          setErrors({
             email: "Invalid email address",
-          }));
+          });
+          setShowErrorBorders(true);
         } else {
-          setErrors((prev) => ({
-            ...prev,
+          // Log unexpected errors only
+          console.error("Unexpected login error:", error);
+          setErrors({
             email: "Failed to sign in. Please try again.",
-          }));
+          });
+          setShowErrorBorders(true);
         }
         setIsSubmitting(false);
       }
@@ -135,7 +158,9 @@ export default function LoginForm() {
             <div
               onClick={() => emailInputRef.current?.focus()}
               className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
-                emailState === "valid"
+                showErrorBorders
+                  ? "input-border-error"
+                  : emailState === "valid"
                   ? "input-border-focus"
                   : "input-border-default"
               } focus-within:border-2`}
@@ -146,6 +171,7 @@ export default function LoginForm() {
                   type="email"
                   value={email}
                   onChange={(e) => handleEmailChange(e.target.value)}
+                  onFocus={handleEmailFocus}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && password) {
                       e.preventDefault();
@@ -174,7 +200,9 @@ export default function LoginForm() {
               <div
                 onClick={() => passwordInputRef.current?.focus()}
                 className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] w-full transition-all duration-300 cursor-pointer ${
-                  passwordState === "valid"
+                  showErrorBorders
+                    ? "input-border-error"
+                    : passwordState === "valid"
                     ? "input-border-focus"
                     : "input-border-default"
                 } focus-within:border-2`}
@@ -185,6 +213,7 @@ export default function LoginForm() {
                     type="password"
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
+                    onFocus={handlePasswordFocus}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -203,6 +232,25 @@ export default function LoginForm() {
                 </div>
               </div>
             </div>
+            {/* Error Tooltip - Only show after submission */}
+            {hasSubmitted && (errors.email || errors.password) && (
+              <div className="bg-[#fa8282] dark:bg-[#fa8282] border-2 border-[#fa8282] dark:border-[#fa8282] relative rounded-[8px] w-full animate-slide-down overflow-hidden transition-colors duration-300">
+                <div className="flex flex-col gap-[8px] items-start px-[16px] py-[8px] relative rounded-[inherit] w-full">
+                  <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[14px] font-semibold font-sans transition-colors duration-300">
+                    {errors.password || errors.email}
+                  </p>
+                  <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-normal font-sans transition-colors duration-300">
+                    Please check your credentials and try again.
+                  </p>
+                  <Link
+                    href="/reset-password"
+                    className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-semibold font-sans underline transition-colors duration-300 hover:opacity-80"
+                  >
+                    Reset password
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* Remember Me Checkbox */}
             <div className="flex gap-[8px] items-center relative w-full">

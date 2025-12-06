@@ -3,9 +3,10 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { AuthProvider } from "../contexts/AuthContext";
+import { SpacesProvider } from "../contexts/SpacesContext";
 import ThemeScript from "../components/ThemeScript";
 import Header from "../components/Header";
-import PageTransition from "../components/PageTransition";
+import ContentWrapper from "../components/ContentWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,22 +26,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="overscroll-none">
-      <body className={`${inter.variable} font-sans antialiased overscroll-none`}>
+      <body
+        className={`${inter.variable} font-sans antialiased overscroll-none`}
+      >
         <ThemeScript />
         <AuthProvider>
-          <ThemeProvider>
-            <div className="flex flex-col min-h-screen">
-              <div className="w-full px-[36px] py-[16px] flex justify-center">
-                <Header />
+          <SpacesProvider>
+            <ThemeProvider>
+              <div className="flex flex-col min-h-screen">
+                <div className="w-full px-[36px] py-[16px] flex justify-center">
+                  <Header />
+                </div>
+                <ContentWrapper>{children}</ContentWrapper>
               </div>
-              <div className="mt-[100px]">
-                <PageTransition>{children}</PageTransition>
-              </div>
-            </div>
-          </ThemeProvider>
+            </ThemeProvider>
+          </SpacesProvider>
         </AuthProvider>
       </body>
     </html>
   );
 }
-
