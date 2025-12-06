@@ -175,6 +175,30 @@ body {
   }
 }
 
+@keyframes slideInFromLeft {
+  0% {
+    left: -100px;
+    opacity: 0;
+  }
+
+  100% {
+    left: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    right: -100px;
+    opacity: 0;
+  }
+
+  100% {
+    right: 0;
+    opacity: 1;
+  }
+}
+
 .animate-slide-down {
   animation: slideDown 0.3s ease-out forwards;
 }
@@ -185,6 +209,14 @@ body {
 
 .animate-scale-in {
   animation: scaleIn 0.2s ease-out forwards;
+}
+
+.animate-slide-in-from-left {
+  animation: slideInFromLeft 0.3s ease-out forwards;
+}
+
+.animate-slide-in-from-right {
+  animation: slideInFromRight 0.3s ease-out forwards;
 }
 
 /* Smooth placeholder transition - apply to all inputs */
@@ -224,6 +256,24 @@ input::placeholder {
 /* Input field background gradient */
 .input-bg-gradient {
   background: linear-gradient(to top, var(--color-input-bg-start), var(--color-input-bg-end));
+}
+
+/* Selected button background gradient - Light mode only */
+.selected-bg-gradient {
+  background: linear-gradient(to right, var(--color-selected-bg-start), var(--color-selected-bg-end));
+}
+
+/* Dark mode selected button - yellow background with bright yellow border and glow (from Figma 38-856) */
+.dark .selected-bg-gradient {
+  background: rgba(255, 255, 49, 0.2);
+  background-image: none;
+  border-color: #ffff31 !important;
+  box-shadow: 0 0 8px rgba(255, 255, 49, 0.5), 0 0 16px rgba(255, 255, 49, 0.3);
+}
+
+/* Selected button text color - Light mode only (#f2f2f2) */
+.selected-text-light {
+  color: #f2f2f2;
 }
 
 /* Stylized text gradient */
@@ -270,4 +320,20 @@ input::placeholder {
   cursor: not-allowed;
   box-shadow: none;
   color: #0d0d0d;
+}
+
+/* Upgrade plan button gradient - light yellowish/beige gradient */
+.upgrade-plan-gradient {
+  background: linear-gradient(to bottom, #fffef0, #fff5dc);
+}
+
+/* Liquid glass effect for borders */
+.liquid-glass-border {
+  border: 1px solid rgba(194, 194, 194, 0.25);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
 }

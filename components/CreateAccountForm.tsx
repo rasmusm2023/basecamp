@@ -446,7 +446,7 @@ export default function CreateAccountForm() {
                           <Key
                             size={24}
                             weight="regular"
-                            className="text-white"
+                            className="text-text-primary transition-colors duration-300"
                           />
                         </div>
                         <div className="text-text-primary text-[12px] font-sans leading-[1.25] transition-colors duration-300">
@@ -471,7 +471,7 @@ export default function CreateAccountForm() {
                         <XCircle
                           size={24}
                           weight="regular"
-                          className="text-white"
+                          className="text-text-primary transition-colors duration-300"
                         />
                       </button>
                     </div>
@@ -671,9 +671,9 @@ export default function CreateAccountForm() {
                     key={use}
                     type="button"
                     onClick={() => setIntendedUse(use)}
-                    className={`border relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
+                    className={`border-2 relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
                       intendedUse === use
-                        ? "bg-gradient-to-r from-selected-bg-start to-selected-bg-end border-selected-border border-2"
+                        ? "selected-bg-gradient border-selected-border"
                         : "input-bg-gradient input-border-default"
                     }`}
                   >
@@ -681,7 +681,7 @@ export default function CreateAccountForm() {
                       <p
                         className={`text-[14px] font-semibold font-sans text-center whitespace-nowrap transition-colors duration-300 ${
                           intendedUse === use
-                            ? "text-selected-text"
+                            ? "selected-text-light dark:text-selected-text"
                             : "text-text-tertiary"
                         }`}
                       >
@@ -712,9 +712,9 @@ export default function CreateAccountForm() {
                       document.documentElement.classList.add("dark");
                     }
                   }}
-                  className={`border relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
+                  className={`border-2 relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
                     preferredTheme === "dark"
-                      ? "bg-gradient-to-r from-selected-bg-start to-selected-bg-end border-selected-border border-2 dark:border"
+                      ? "selected-bg-gradient border-selected-border"
                       : "bg-gradient-to-t from-input-bg-start to-input-bg-end input-border-default"
                   }`}
                 >
@@ -750,9 +750,9 @@ export default function CreateAccountForm() {
                       document.documentElement.classList.remove("dark");
                     }
                   }}
-                  className={`border relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
+                  className={`border-2 relative rounded-[8px] backdrop-blur-sm transition-all duration-300 ${
                     preferredTheme === "light"
-                      ? "bg-gradient-to-r from-selected-bg-start to-selected-bg-end border-selected-border border-2 dark:border"
+                      ? "selected-bg-gradient border-selected-border"
                       : "bg-gradient-to-t from-input-bg-start to-input-bg-end input-border-default"
                   }`}
                 >
@@ -760,7 +760,7 @@ export default function CreateAccountForm() {
                     <div
                       className={`relative shrink-0 w-[16px] h-[16px] transition-colors duration-300 ${
                         preferredTheme === "light"
-                          ? "text-selected-text"
+                          ? "selected-text-light dark:text-selected-text"
                           : "text-text-tertiary"
                       }`}
                     >
@@ -769,7 +769,7 @@ export default function CreateAccountForm() {
                     <p
                       className={`text-[14px] font-semibold font-sans text-center transition-colors duration-300 ${
                         preferredTheme === "light"
-                          ? "text-selected-text"
+                          ? "selected-text-light dark:text-selected-text"
                           : "text-text-tertiary"
                       }`}
                     >
