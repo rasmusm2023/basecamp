@@ -6,7 +6,6 @@ import { DarkModeToggle, LogoIcon } from "./icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import {
-  Settings,
   UserCircle,
   RocketLaunch,
   Plus,
@@ -14,7 +13,6 @@ import {
   Sun,
   Moon,
   SignOut,
-  UsersThree,
   ChatTeardropText,
   StarFour,
 } from "./icons";
@@ -23,17 +21,13 @@ export default function Header() {
   const { user, userData, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
-  const [showCommunityDropdown, setShowCommunityDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const settingsDropdownRef = useRef<HTMLDivElement>(null);
-  const communityDropdownRef = useRef<HTMLDivElement>(null);
 
   // Get user display name
   const displayName = userData?.displayName || user?.displayName || "User";
   const firstName = displayName.split(" ")[0] || "User";
 
-  // Close dropdowns when clicking outside
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -42,28 +36,16 @@ export default function Header() {
       ) {
         setShowDropdown(false);
       }
-      if (
-        settingsDropdownRef.current &&
-        !settingsDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowSettingsDropdown(false);
-      }
-      if (
-        communityDropdownRef.current &&
-        !communityDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowCommunityDropdown(false);
-      }
     };
 
-    if (showDropdown || showSettingsDropdown || showCommunityDropdown) {
+    if (showDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showDropdown, showSettingsDropdown, showCommunityDropdown]);
+  }, [showDropdown]);
 
   const handleThemeToggle = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
@@ -108,173 +90,49 @@ export default function Header() {
         {user ? (
           // Logged in state - right side
           <>
-            {/* Community Button with Dropdown */}
-            <div className="relative shrink-0" ref={communityDropdownRef}>
-              <button
-                onClick={() => setShowCommunityDropdown(!showCommunityDropdown)}
-                className="box-border flex gap-[8px] items-center justify-center p-[8px] relative shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="relative shrink-0 w-[16px] h-[16px]">
-                  <UsersThree
-                    size={16}
-                    weight="regular"
-                    className="text-text-tertiary dark:text-text-tertiary transition-colors duration-300"
-                  />
-                </div>
-                <p className="text-text-tertiary text-[12px] font-medium font-sans transition-colors duration-300">
-                  Community
-                </p>
-              </button>
-
-              {/* Community Dropdown Menu */}
-              {showCommunityDropdown && (
-                <div className="absolute right-0 top-[calc(100%+8px)] border border-white dark:border-white bg-white dark:bg-white box-border flex flex-col gap-[4px] items-start justify-center p-[8px] rounded-[8px] shrink-0 animate-slide-down z-50 min-w-[200px]">
-                  {/* Feedback Board */}
-                  <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="relative shrink-0 w-[16px] h-[16px]">
-                      <ChatTeardropText
-                        size={16}
-                        weight="regular"
-                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
-                      />
-                    </div>
-                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
-                      Feedback board
-                    </p>
-                  </button>
-
-                  {/* Templates */}
-                  <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="relative shrink-0 w-[16px] h-[16px]">
-                      <StarFour
-                        size={16}
-                        weight="regular"
-                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
-                      />
-                    </div>
-                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
-                      Templates
-                    </p>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Settings Button with Dropdown */}
-            <div className="relative shrink-0" ref={settingsDropdownRef}>
-              <button
-                onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-                className="box-border flex gap-[8px] items-center justify-center p-[8px] relative shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="relative shrink-0 w-[16px] h-[16px]">
-                  <Settings
-                    size={16}
-                    weight="regular"
-                    className="text-text-tertiary dark:text-text-tertiary transition-colors duration-300"
-                  />
-                </div>
-                <p className="text-text-tertiary text-[12px] font-medium font-sans transition-colors duration-300">
-                  Settings
-                </p>
-              </button>
-
-              {/* Settings Dropdown Menu */}
-              {showSettingsDropdown && (
-                <div className="absolute right-0 top-[calc(100%+8px)] border border-white dark:border-white bg-white dark:bg-white box-border flex flex-col gap-[4px] items-start justify-center p-[8px] rounded-[8px] shrink-0 animate-slide-down z-50 min-w-[200px]">
-                  {/* Theme Toggle */}
-                  <button
-                    onClick={handleThemeToggle}
-                    className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    <div className="relative shrink-0 w-[16px] h-[16px]">
-                      {theme === "dark" ? (
-                        <Sun
-                          size={16}
-                          weight="regular"
-                          className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
-                        />
-                      ) : (
-                        <Moon
-                          size={16}
-                          weight="regular"
-                          className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
-                        />
-                      )}
-                    </div>
-                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
-                      {theme === "dark" ? "Light mode" : "Dark mode"}
-                    </p>
-                  </button>
-
-                  {/* Account Settings */}
-                  <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="relative shrink-0 w-[16px] h-[16px]">
-                      <UserCircle
-                        size={16}
-                        weight="regular"
-                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
-                      />
-                    </div>
-                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
-                      Account settings
-                    </p>
-                  </button>
-
-                  {/* Logout */}
-                  <button
-                    onClick={logout}
-                    className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    <div className="relative shrink-0 w-[16px] h-[16px]">
-                      <SignOut
-                        size={16}
-                        weight="regular"
-                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
-                      />
-                    </div>
-                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
-                      Logout
-                    </p>
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Upgrade Plan Button */}
+            <button className="border border-[#ffac33] dark:border-[#ffac33] border-solid box-border flex gap-[8px] items-center justify-center p-[8px] relative rounded-[8px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity upgrade-plan-gradient">
+              <div className="relative shrink-0 w-[16px] h-[16px]">
+                <Sparkle
+                  size={16}
+                  weight="regular"
+                  className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
+                />
+              </div>
+              <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
+                Upgrade
+              </p>
+            </button>
 
             {/* Profile Button with Dropdown */}
             <div className="relative shrink-0" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="border border-white dark:border-white bg-white dark:bg-white box-border flex gap-[8px] items-center justify-center p-[8px] relative rounded-[8px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                className={`box-border flex gap-[8px] items-center justify-center p-[8px] relative shrink-0 cursor-pointer rounded-[8px] transition-all duration-300 ${
+                  showDropdown
+                    ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
+                    : "hover:bg-bg-primary dark:hover:bg-[rgba(255,255,255,0.1)]"
+                }`}
               >
                 <div className="relative shrink-0 w-[16px] h-[16px]">
                   <UserCircle
                     size={16}
                     weight="regular"
-                    className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
+                    className="text-text-tertiary dark:text-text-tertiary transition-colors duration-300"
                   />
                 </div>
-                <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
+                <p className="text-text-tertiary text-[12px] font-medium font-sans transition-colors duration-300">
                   {firstName}
                 </p>
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Combined Dropdown Menu */}
               {showDropdown && (
                 <div className="absolute right-0 top-[calc(100%+8px)] border border-white dark:border-white bg-white dark:bg-white box-border flex flex-col gap-[4px] items-start justify-center p-[8px] rounded-[8px] shrink-0 animate-slide-down z-50 min-w-[200px]">
-                  {/* My Profile */}
-                  <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="relative shrink-0 w-[16px] h-[16px]">
-                      <UserCircle
-                        size={16}
-                        weight="regular"
-                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
-                      />
-                    </div>
-                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
-                      My profile
-                    </p>
-                  </button>
-
+                  {/* Spaces Section */}
+                  <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[10px] font-medium font-sans uppercase opacity-60 px-[8px] py-[4px]">
+                    SPACES
+                  </p>
                   {/* My Spaces */}
                   <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
                     <div className="relative shrink-0 w-[16px] h-[16px]">
@@ -303,17 +161,115 @@ export default function Header() {
                     </p>
                   </button>
 
-                  {/* Upgrade Plan */}
-                  <button className="border border-[#ffac33] dark:border-[#ffac33] border-solid box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity upgrade-plan-gradient">
+                  {/* Divider */}
+                  <div className="h-px bg-[rgba(0,0,0,0.05)] dark:bg-[rgba(0,0,0,0.05)] w-full my-[4px]" />
+
+                  {/* Settings Section */}
+                  <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[10px] font-medium font-sans uppercase opacity-60 px-[8px] py-[4px]">
+                    SETTINGS
+                  </p>
+                  {/* Account Settings */}
+                  <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
                     <div className="relative shrink-0 w-[16px] h-[16px]">
-                      <Sparkle
+                      <UserCircle
                         size={16}
                         weight="regular"
                         className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
                       />
                     </div>
                     <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
-                      Upgrade plan
+                      Account settings
+                    </p>
+                  </button>
+
+                  {/* Theme Toggle */}
+                  <button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleThemeToggle();
+                    }}
+                    className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    <div className="relative shrink-0 w-[16px] h-[16px]">
+                      {theme === "dark" ? (
+                        <Sun
+                          size={16}
+                          weight="regular"
+                          className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
+                        />
+                      ) : (
+                        <Moon
+                          size={16}
+                          weight="regular"
+                          className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
+                        />
+                      )}
+                    </div>
+                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
+                      {theme === "dark" ? "Light mode" : "Dark mode"}
+                    </p>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="h-px bg-[rgba(0,0,0,0.05)] dark:bg-[rgba(0,0,0,0.05)] w-full my-[4px]" />
+
+                  {/* Community Section */}
+                  <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[10px] font-medium font-sans uppercase opacity-60 px-[8px] py-[4px]">
+                    COMMUNITY
+                  </p>
+                  {/* Feedback Board */}
+                  <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
+                    <div className="relative shrink-0 w-[16px] h-[16px]">
+                      <ChatTeardropText
+                        size={16}
+                        weight="regular"
+                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
+                      />
+                    </div>
+                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
+                      Feedback board
+                    </p>
+                  </button>
+
+                  {/* Templates */}
+                  <button className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity">
+                    <div className="relative shrink-0 w-[16px] h-[16px]">
+                      <StarFour
+                        size={16}
+                        weight="regular"
+                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
+                      />
+                    </div>
+                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
+                      Templates
+                    </p>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="h-px bg-[rgba(0,0,0,0.05)] dark:bg-[rgba(0,0,0,0.05)] w-full my-[4px]" />
+
+                  {/* Logout */}
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowDropdown(false);
+                    }}
+                    className="box-border flex gap-[8px] items-center p-[8px] relative rounded-[8px] shrink-0 w-full cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    <div className="relative shrink-0 w-[16px] h-[16px]">
+                      <SignOut
+                        size={16}
+                        weight="regular"
+                        className="text-[#0d0d0d] dark:text-[#0d0d0d] transition-colors duration-300"
+                      />
+                    </div>
+                    <p className="text-[#0d0d0d] dark:text-[#0d0d0d] text-[12px] font-medium font-sans transition-colors duration-300">
+                      Logout
                     </p>
                   </button>
                 </div>

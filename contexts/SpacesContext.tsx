@@ -39,7 +39,11 @@ interface SpacesContextType {
   loading: boolean;
   loadingFolders: boolean;
   loadingSubFolders: Set<string>;
+  activeFolderId: string | null;
+  activeSubFolderId: string | null;
   setCurrentSpaceId: (id: string | null) => void;
+  setActiveFolder: (folderId: string | null) => void;
+  setActiveSubFolder: (subFolderId: string | null) => void;
   refreshSpaces: () => Promise<void>;
   createNewSpace: (name: string) => Promise<string>;
   updateSpace: (spaceId: string, newName: string) => Promise<void>;
@@ -102,6 +106,8 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   const [loadingSubFolders, setLoadingSubFolders] = useState<Set<string>>(
     new Set()
   );
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [activeSubFolderId, setActiveSubFolderId] = useState<string | null>(null);
 
   // Refs to store unsubscribe functions for cleanup
   const spacesUnsubscribeRef = useRef<Unsubscribe | null>(null);
@@ -124,14 +130,14 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setLoading(true);
+    // Set loading to false immediately - real-time listener will update data as it arrives
+    setLoading(false);
 
     // Subscribe to spaces in real-time
     spacesUnsubscribeRef.current = subscribeToSpaces(
       user.uid,
       (fetchedSpaces) => {
         setSpaces(fetchedSpaces);
-        setLoading(false);
 
         // Set first space as current if none is selected
         if (!currentSpaceId && fetchedSpaces.length > 0) {
@@ -144,7 +150,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
             .then((spaceId) => {
               return Promise.all([
                 spaceId,
-                createFolder(user.uid, spaceId, "Unnamed folder"),
+                createFolder(user.uid, spaceId, "New collection"),
               ]);
             })
             .then(([spaceId, folderId]) => {
@@ -152,7 +158,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
                 user.uid,
                 spaceId,
                 folderId,
-                "Unnamed sub-folder"
+                "New folder"
               );
             })
             .catch((error) => {
@@ -222,7 +228,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
                         user.uid,
                         currentSpaceId,
                         folder.id,
-                        "Unnamed sub-folder"
+                        "New folder"
                       ).catch((error) => {
                         console.error(
                           `Error creating subfolder for folder ${folder.id}:`,
@@ -412,7 +418,11 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         loading,
         loadingFolders,
         loadingSubFolders,
+        activeFolderId,
+        activeSubFolderId,
         setCurrentSpaceId,
+        setActiveFolder: setActiveFolderId,
+        setActiveSubFolder: setActiveSubFolderId,
         refreshSpaces,
         createNewSpace,
         updateSpace,

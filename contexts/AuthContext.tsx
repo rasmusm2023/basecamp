@@ -121,16 +121,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth!, async (user) => {
       setUser(user);
+      // Set loading to false immediately - don't wait for user data fetch
+      setLoading(false);
 
       if (user) {
-        // Fetch user data from Firestore when user signs in
-        const data = await fetchUserData(user.uid);
-        setUserData(data);
+        // Fetch user data from Firestore in the background (non-blocking)
+        fetchUserData(user.uid).then((data) => {
+          setUserData(data);
+        });
       } else {
         setUserData(null);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -188,19 +189,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
         console.log("signUp: Space created with ID:", spaceId);
 
-        const folderId = await createFolder(
-          userCredential.user.uid,
-          spaceId,
-          "Unnamed folder"
-        );
-        console.log("signUp: Folder created with ID:", folderId);
+              const folderId = await createFolder(
+                userCredential.user.uid,
+                spaceId,
+                "New collection"
+              );
+              console.log("signUp: Folder created with ID:", folderId);
 
-        await createSubFolder(
-          userCredential.user.uid,
-          spaceId,
-          folderId,
-          "Unnamed sub-folder"
-        );
+              await createSubFolder(
+                userCredential.user.uid,
+                spaceId,
+                folderId,
+                "New folder"
+              );
         console.log("signUp: Sub-folder created successfully");
         console.log("signUp: Default space structure creation completed");
       } catch (error: any) {
