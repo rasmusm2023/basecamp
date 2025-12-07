@@ -29,6 +29,10 @@ export {
   UsersThree,
   ChatTeardropText,
   StarFour,
+  Trash,
+  FolderPlus,
+  TextT,
+  Circle,
 } from "phosphor-react";
 
 // Special components that need custom logic/styling
