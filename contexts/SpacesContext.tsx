@@ -134,26 +134,32 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     setLoading(false);
 
     // Subscribe to spaces in real-time
+    console.log("[SpacesContext] Setting up spaces subscription for user:", user.uid);
     spacesUnsubscribeRef.current = subscribeToSpaces(
       user.uid,
       (fetchedSpaces) => {
+        console.log("[SpacesContext] Spaces received:", fetchedSpaces.length, fetchedSpaces);
         setSpaces(fetchedSpaces);
 
         // Set first space as current if none is selected
         if (!currentSpaceId && fetchedSpaces.length > 0) {
+          console.log("[SpacesContext] Setting current space to:", fetchedSpaces[0].id);
           setCurrentSpaceId(fetchedSpaces[0].id);
         }
 
         // Create default space if none exists (in background, non-blocking)
         if (fetchedSpaces.length === 0) {
+          console.log("[SpacesContext] No spaces found, creating default space...");
           createSpace(user.uid, "Your space")
             .then((spaceId) => {
+              console.log("[SpacesContext] Default space created:", spaceId);
               return Promise.all([
                 spaceId,
                 createFolder(user.uid, spaceId, "New collection"),
               ]);
             })
             .then(([spaceId, folderId]) => {
+              console.log("[SpacesContext] Default folder created:", folderId);
               return createSubFolder(
                 user.uid,
                 spaceId,
@@ -161,8 +167,11 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
                 "New folder"
               );
             })
+            .then(() => {
+              console.log("[SpacesContext] Default subfolder created");
+            })
             .catch((error) => {
-              console.error("Error creating default space structure:", error);
+              console.error("[SpacesContext] Error creating default space structure:", error);
             });
         }
       }
@@ -197,12 +206,36 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     setLoadingFolders(true);
 
     // Subscribe to folders in real-time
+    console.log("[SpacesContext] Setting up folders subscription for space:", currentSpaceId);
     foldersUnsubscribeRef.current = subscribeToFolders(
       user.uid,
       currentSpaceId,
       (fetchedFolders) => {
+        console.log("[SpacesContext] Folders received:", fetchedFolders.length, fetchedFolders);
         setFolders(fetchedFolders);
         setLoadingFolders(false);
+
+        // If space has no folders, create a default folder structure
+        if (fetchedFolders.length === 0) {
+          console.log("[SpacesContext] No folders found, creating default folder structure...");
+          createFolder(user.uid, currentSpaceId, "New collection")
+            .then((folderId) => {
+              console.log("[SpacesContext] Default folder created:", folderId);
+              return createSubFolder(
+                user.uid,
+                currentSpaceId,
+                folderId,
+                "New folder"
+              );
+            })
+            .then(() => {
+              console.log("[SpacesContext] Default subfolder created");
+            })
+            .catch((error) => {
+              console.error("[SpacesContext] Error creating default folder structure:", error);
+            });
+          return; // Exit early, folders will be created and subscription will fire again
+        }
 
         // Set up real-time listeners for all subfolders in parallel
         const newSubFoldersMap: Record<string, SubFolder[]> = {};
