@@ -15,6 +15,7 @@ import {
   TextT,
   Settings,
   Trash,
+  DotsThree,
 } from "./icons";
 import { useAuth } from "../contexts/AuthContext";
 import ContextMenu, { ContextMenuItem } from "./ContextMenu";
@@ -177,6 +178,13 @@ interface FolderItemProps {
     id: string,
     parentId?: string
   ) => void;
+  onIconClick: (
+    e: React.MouseEvent,
+    type: "folder" | "subfolder",
+    id: string,
+    parentId?: string
+  ) => void;
+  isMenuOpen: (type: "folder" | "subfolder", id: string) => boolean;
 }
 
 function FolderItem({
@@ -197,9 +205,14 @@ function FolderItem({
   editingSubFolderId,
   onEditChange,
   onContextMenu: handleContextMenu,
+  onIconClick: handleIconClick,
+  isMenuOpen,
   onSetActive,
   onSetActiveSubFolder,
 }: FolderItemProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [hoveredSubFolderId, setHoveredSubFolderId] = useState<string | null>(null);
+  
   // Only show yellow if folder is active AND expanded AND has no active subfolder
   // If folder is not expanded, it should never be yellow
   const hasActiveSubFolder = activeSubFolderId !== null;
@@ -211,12 +224,22 @@ function FolderItem({
   const folderIconColor = shouldShowYellow
     ? "text-[#FFFF31]"
     : "text-text-primary dark:text-white opacity-50";
+  
+  const showFolderIcon = isHovered || isMenuOpen("folder", folder.id);
 
   return (
     <div className="flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-      <div className="flex gap-[4px] items-end relative shrink-0 w-full">
+      <div 
+        className={`flex gap-[4px] items-center relative shrink-0 w-full rounded-[4px] transition-all duration-300 ${
+          isHovered || isMenuOpen("folder", folder.id)
+            ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
+            : ""
+        }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         <div
-          className="flex gap-[4px] items-end relative shrink-0 flex-1 cursor-pointer"
+          className="flex gap-[4px] items-center relative shrink-0 flex-1 cursor-pointer"
           onClick={(e) => {
             // Don't toggle if clicking on the editable input
             if ((e.target as HTMLElement).tagName === 'INPUT') {
@@ -254,10 +277,6 @@ function FolderItem({
             />
           </div>
           <div
-            onContextMenu={(e) => {
-              e.stopPropagation();
-              handleContextMenu(e, "folder", folder.id);
-            }}
             onClick={(e) => {
               e.stopPropagation();
               onToggle();
@@ -276,6 +295,25 @@ function FolderItem({
             />
           </div>
         </div>
+        {showFolderIcon && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleIconClick(e, "folder", folder.id);
+            }}
+            className={`relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-all duration-300 ${
+              isMenuOpen("folder", folder.id)
+                ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
+                : "hover:bg-bg-primary dark:hover:bg-[rgba(255,255,255,0.1)]"
+            }`}
+          >
+            <DotsThree
+              size={20}
+              weight="regular"
+              className="text-text-primary dark:text-white opacity-50 transition-colors duration-300"
+            />
+          </button>
+        )}
       </div>
       {isExpanded && (
         <div className="flex flex-col gap-[8px] items-start relative shrink-0 w-full pl-[28px]">
@@ -285,10 +323,19 @@ function FolderItem({
               ? "text-[#FFFF31]"
               : "text-text-primary dark:text-white opacity-50";
             
+            const isSubFolderHovered = hoveredSubFolderId === subFolder.id;
+            const showSubFolderIcon = isSubFolderHovered || isMenuOpen("subfolder", subFolder.id);
+            
             return (
               <div
                 key={subFolder.id}
-                className="flex items-center justify-between relative shrink-0 w-full"
+                className={`flex items-center justify-between relative shrink-0 w-full rounded-[4px] transition-all duration-300 ${
+                  isSubFolderHovered || isMenuOpen("subfolder", subFolder.id)
+                    ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
+                    : ""
+                }`}
+                onMouseEnter={() => setHoveredSubFolderId(subFolder.id)}
+                onMouseLeave={() => setHoveredSubFolderId(null)}
               >
                 <div
                   className="flex items-center gap-[4px] relative shrink-0 flex-1 cursor-pointer"
@@ -301,11 +348,6 @@ function FolderItem({
                     if (onSetActiveSubFolder) {
                       onSetActiveSubFolder(subFolder.id);
                     }
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleContextMenu(e, "subfolder", subFolder.id, folder.id);
                   }}
                 >
                   <div className="flex flex-col gap-[8px] items-start relative shrink-0 flex-1">
@@ -324,6 +366,26 @@ function FolderItem({
                     />
                   </div>
                 </div>
+                {showSubFolderIcon && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleIconClick(e, "subfolder", subFolder.id, folder.id);
+                    }}
+                    className={`relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-all duration-300 ${
+                      isMenuOpen("subfolder", subFolder.id)
+                        ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
+                        : "hover:bg-bg-primary dark:hover:bg-[rgba(255,255,255,0.1)]"
+                    }`}
+                  >
+                    <DotsThree
+                      size={20}
+                      weight="regular"
+                      className="text-text-primary dark:text-white opacity-50 transition-colors duration-300"
+                    />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -443,6 +505,27 @@ export default function Sidebar() {
       id,
       parentId,
     });
+  };
+
+  const handleIconClick = (
+    e: React.MouseEvent,
+    type: "folder" | "subfolder",
+    id: string,
+    parentId?: string
+  ) => {
+    const buttonElement = e.currentTarget as HTMLElement;
+    const rect = buttonElement.getBoundingClientRect();
+    setContextMenu({
+      x: rect.right + 4, // Position menu close to the right of the button
+      y: rect.top, // Position menu aligned with the top of the button
+      type,
+      id,
+      parentId,
+    });
+  };
+
+  const isMenuOpenFor = (type: "folder" | "subfolder", id: string): boolean => {
+    return contextMenu !== null && contextMenu.type === type && contextMenu.id === id;
   };
 
   const handleUpdateSpace = async (newName: string) => {
@@ -802,7 +885,6 @@ export default function Sidebar() {
             <div
               key={folder.id}
               className="flex flex-col gap-[16px] items-start relative shrink-0 w-full"
-              onContextMenu={(e) => handleContextMenu(e, "folder", folder.id)}
             >
               <FolderItem
                 folder={folder}
@@ -847,6 +929,8 @@ export default function Sidebar() {
                   setEditingSubFolderId(subFolderId);
                 }}
                 onContextMenu={handleContextMenu}
+                onIconClick={handleIconClick}
+                isMenuOpen={isMenuOpenFor}
               />
               {index < folders.length - 1 && (
                 <div className="h-px bg-[rgba(255,255,255,0.15)] dark:bg-[rgba(255,255,255,0.15)] relative shrink-0 w-[248px]" />

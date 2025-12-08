@@ -33,6 +33,7 @@ export {
   FolderPlus,
   TextT,
   Circle,
+  DotsThree,
 } from "phosphor-react";
 
 // Special components that need custom logic/styling
