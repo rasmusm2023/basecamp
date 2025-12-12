@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection - users can read/write their own user document
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // Spaces subcollection
+      match /spaces/{spaceId} {
+        allow read, write: if isOwner(userId);
+
+        // Collections subcollection
+        match /collections/{collectionId} {
+          allow read, write: if isOwner(userId);
+
+          // Bookmarks in collections
+          match /bookmarks/{bookmarkId} {
+            allow read, write: if isOwner(userId);
+          }
+
+          // Folders subcollection
+          match /folders/{folderId} {
+            allow read, write: if isOwner(userId);
+
+            // Bookmarks in folders
+            match /bookmarks/{bookmarkId} {
+              allow read, write: if isOwner(userId);
+            }
+          }
+        }
+      }
+    }
+  }
+}

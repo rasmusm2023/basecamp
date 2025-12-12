@@ -5,6 +5,7 @@ import {
   Firestore,
   enableIndexedDbPersistence,
 } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -31,6 +32,7 @@ const isFirebaseConfigured = () => {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 
 if (isFirebaseConfigured()) {
   try {
@@ -43,6 +45,7 @@ if (isFirebaseConfigured()) {
     // Initialize Firebase services
     auth = getAuth(app);
     db = getFirestore(app);
+    storage = getStorage(app);
 
     // Enable offline persistence (only on client side)
     if (typeof window !== "undefined") {
@@ -68,5 +71,5 @@ if (isFirebaseConfigured()) {
   );
 }
 
-export { auth, db };
+export { auth, db, storage };
 export default app;

@@ -10,6 +10,8 @@ export {
   Sun,
   WarningCircle,
   XCircle,
+  X,
+  Link,
   MagnifyingGlass as Search,
   Plus,
   Folder,
