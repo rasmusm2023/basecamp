@@ -527,12 +527,13 @@ export const createBookmarkInCollection = async (
   const bookmarkRef = doc(
     collection(db!, getBookmarkPath(userId, spaceId, collectionId))
   );
+  // Build bookmark object, only including optional fields if they have values
   const bookmark: Bookmark = {
     id: bookmarkRef.id,
     url: url.trim(),
     name: name.trim(),
-    description: description?.trim(),
-    image: image,
+    ...(description?.trim() && { description: description.trim() }),
+    ...(image && { image }),
     tags: tags || [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -561,12 +562,13 @@ export const createBookmarkInFolder = async (
   const bookmarkRef = doc(
     collection(db!, getBookmarkPath(userId, spaceId, collectionId, folderId))
   );
+  // Build bookmark object, only including optional fields if they have values
   const bookmark: Bookmark = {
     id: bookmarkRef.id,
     url: url.trim(),
     name: name.trim(),
-    description: description?.trim(),
-    image: image,
+    ...(description?.trim() && { description: description.trim() }),
+    ...(image && { image }),
     tags: tags || [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
