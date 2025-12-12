@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useSpaces } from "../contexts/SpacesContext";
 import SpaceLoadingAnimation from "./SpaceLoadingAnimation";
+import AddBookmarkForm from "./AddBookmarkForm";
+import BookmarkCard from "./BookmarkCard";
 import {
   Search,
   Plus,
@@ -23,12 +25,16 @@ export default function Dashboard() {
   const {
     currentSpace,
     currentSpaceId,
-    folders,
-    subFoldersMap,
+    collections,
+    foldersMap,
+    activeCollectionId,
     activeFolderId,
-    activeSubFolderId,
+    setActiveCollection,
     setActiveFolder,
-    setActiveSubFolder,
+    bookmarks,
+    loadingBookmarks,
+    createBookmark,
+    deleteBookmark,
   } = useSpaces();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -39,11 +45,12 @@ export default function Dashboard() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isLoadingSpace, setIsLoadingSpace] = useState(false);
   const [previousSpaceId, setPreviousSpaceId] = useState<string | null>(null);
+  const [showAddBookmarkForm, setShowAddBookmarkForm] = useState(false);
 
-  // Update content key when folder/subfolder changes to trigger animations
+  // Update content key when collection/folder changes to trigger animations
   useEffect(() => {
     setContentKey((prev) => prev + 1);
-  }, [activeFolderId, activeSubFolderId]);
+  }, [activeCollectionId, activeFolderId]);
 
   // Trigger loading animation when space changes (not on initial load)
   useEffect(() => {
@@ -65,30 +72,30 @@ export default function Dashboard() {
   const displayName = userData?.displayName || user?.displayName || "User";
   const email = userData?.email || user?.email || "";
 
-  // Get active folder and subfolder data
-  const activeFolder = folders.find((f) => f.id === activeFolderId);
-  const activeSubFolder = activeFolderId
-    ? subFoldersMap[activeFolderId]?.find((sf) => sf.id === activeSubFolderId)
+  // Get active collection and folder data
+  const activeCollection = collections.find((c) => c.id === activeCollectionId);
+  const activeFolder = activeCollectionId
+    ? foldersMap[activeCollectionId]?.find((f) => f.id === activeFolderId)
     : null;
-  // Check if user is browsing a folder
-  const isBrowsingFolder = activeFolderId !== null;
+  // Check if user is browsing a collection
+  const isBrowsingCollection = activeCollectionId !== null;
 
   // Breadcrumb click handlers
   const handleSpaceClick = () => {
+    setActiveCollection(null);
     setActiveFolder(null);
-    setActiveSubFolder(null);
   };
 
-  const handleFolderClick = (folderId: string) => {
-    setActiveFolder(folderId);
-    setActiveSubFolder(null);
-    // Folder will be expanded by Sidebar's useEffect when activeFolderId changes
+  const handleCollectionClick = (collectionId: string) => {
+    setActiveCollection(collectionId);
+    setActiveFolder(null);
+    // Collection will be expanded by Sidebar's useEffect when activeCollectionId changes
   };
 
-  const handleSubFolderClick = (folderId: string, subFolderId: string) => {
+  const handleFolderClick = (collectionId: string, folderId: string) => {
+    setActiveCollection(collectionId);
     setActiveFolder(folderId);
-    setActiveSubFolder(subFolderId);
-    // Folder will be expanded by Sidebar's useEffect when activeFolderId changes
+    // Collection will be expanded by Sidebar's useEffect when activeCollectionId changes
   };
 
   return (
@@ -118,7 +125,7 @@ export default function Dashboard() {
 
             {/* Main Content */}
             <div className="flex flex-col gap-[8px] items-center relative shrink-0 flex-1">
-              {!isBrowsingFolder ? (
+              {!isBrowsingCollection ? (
                 /* Large Search Box - When no folder is active */
                 <div className="flex flex-col items-center justify-start relative shrink-0 flex-1 w-full px-[64px]">
                   <div
@@ -253,6 +260,31 @@ export default function Dashboard() {
                         {currentSpace?.name || "Your space"}
                       </button>
 
+                      {/* Show collection if active collection exists */}
+                      {activeCollection && (
+                        <>
+                          <div className="relative shrink-0 w-[24px] h-[24px]">
+                            <ChevronRight
+                              size={24}
+                              weight="regular"
+                              className="text-text-primary dark:text-white opacity-50 transition-colors duration-300"
+                            />
+                          </div>
+                          <button
+                            onClick={() =>
+                              handleCollectionClick(activeCollection.id)
+                            }
+                            className={`text-[16px] font-light font-sans transition-colors duration-300 hover:opacity-75 cursor-pointer ${
+                              activeFolder
+                                ? "text-text-primary dark:text-white opacity-50"
+                                : "text-text-primary dark:text-white font-bold"
+                            }`}
+                          >
+                            {activeCollection.name}
+                          </button>
+                        </>
+                      )}
+
                       {/* Show folder if active folder exists */}
                       {activeFolder && (
                         <>
@@ -264,38 +296,15 @@ export default function Dashboard() {
                             />
                           </div>
                           <button
-                            onClick={() => handleFolderClick(activeFolder.id)}
-                            className={`text-[16px] font-light font-sans transition-colors duration-300 hover:opacity-75 cursor-pointer ${
-                              activeSubFolder
-                                ? "text-text-primary dark:text-white opacity-50"
-                                : "text-text-primary dark:text-white font-bold"
-                            }`}
-                          >
-                            {activeFolder.name}
-                          </button>
-                        </>
-                      )}
-
-                      {/* Show subfolder if active subfolder exists */}
-                      {activeSubFolder && (
-                        <>
-                          <div className="relative shrink-0 w-[24px] h-[24px]">
-                            <ChevronRight
-                              size={24}
-                              weight="regular"
-                              className="text-text-primary dark:text-white opacity-50 transition-colors duration-300"
-                            />
-                          </div>
-                          <button
                             onClick={() =>
-                              handleSubFolderClick(
-                                activeFolder!.id,
-                                activeSubFolder.id
+                              handleFolderClick(
+                                activeCollection!.id,
+                                activeFolder.id
                               )
                             }
                             className="text-text-primary dark:text-white text-[16px] font-bold font-sans transition-colors duration-300 hover:opacity-75 cursor-pointer"
                           >
-                            {activeSubFolder.name}
+                            {activeFolder.name}
                           </button>
                         </>
                       )}
@@ -334,10 +343,10 @@ export default function Dashboard() {
                               Searching:
                             </p>
                             <p className="text-white text-[12px] font-medium font-sans">
-                              {activeSubFolder
-                                ? activeSubFolder.name
-                                : activeFolder
+                              {activeFolder
                                 ? activeFolder.name
+                                : activeCollection
+                                ? activeCollection.name
                                 : currentSpace?.name || "Your space"}
                             </p>
                           </div>
@@ -347,7 +356,10 @@ export default function Dashboard() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-[16px] h-full items-center justify-end relative shrink-0">
-                      <div className="liquid-glass-border box-border flex gap-[8px] items-center justify-center px-[16px] py-[12px] relative rounded-[8px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+                      <button
+                        onClick={() => setShowAddBookmarkForm(true)}
+                        className="liquid-glass-border box-border flex gap-[8px] items-center justify-center px-[16px] py-[12px] relative rounded-[8px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                      >
                         <div className="relative shrink-0 w-[16px] h-[16px]">
                           <Plus
                             size={16}
@@ -358,7 +370,7 @@ export default function Dashboard() {
                         <p className="text-text-light dark:text-text-light text-[12px] font-medium font-sans transition-colors duration-300">
                           Add link
                         </p>
-                      </div>
+                      </button>
                       <div className="liquid-glass-border box-border flex gap-[8px] items-center justify-center px-[16px] py-[12px] relative rounded-[8px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
                         <div className="relative shrink-0 w-[16px] h-[16px]">
                           <Folder
@@ -472,14 +484,129 @@ export default function Dashboard() {
                     }}
                   >
                     <p className="text-text-primary dark:text-white text-[12px] font-medium font-sans opacity-75 text-right w-full transition-colors duration-300">
-                      0 saved links
+                      {bookmarks.length} saved{" "}
+                      {bookmarks.length === 1 ? "link" : "links"}
                     </p>
-                    {/* Empty State Grid */}
-                    <div className="gap-[24px] grid grid-cols-4 grid-rows-2 h-[680px] relative shrink-0 w-full">
-                      {/* Add Link Card */}
-                      <div className="border-2 border-[rgba(255,255,255,0.1)] dark:border-[rgba(255,255,255,0.1)] border-solid h-[300px] relative rounded-[16px] self-start shrink-0 w-full">
-                        <div className="flex flex-col h-[300px] items-center justify-center overflow-hidden relative rounded-[inherit] w-full">
-                          <div className="basis-0 bg-gradient-to-r box-border flex from-bg-dark dark:from-bg-dark gap-[8px] grow items-center justify-center min-h-px min-w-px opacity-25 overflow-hidden p-[16px] relative shrink-0 to-[#151515] dark:to-[#151515] w-full">
+                    {/* Bookmarks Display */}
+                    {loadingBookmarks ? (
+                      <div className="flex items-center justify-center h-[400px]">
+                        <p className="text-text-secondary dark:text-text-light">
+                          Loading bookmarks...
+                        </p>
+                      </div>
+                    ) : bookmarks.length === 0 ? (
+                      /* Empty State */
+                      <div className="gap-[24px] grid grid-cols-4 grid-rows-2 h-[680px] relative shrink-0 w-full">
+                        {/* Add Link Card */}
+                        <button
+                          onClick={() => setShowAddBookmarkForm(true)}
+                          className="border-2 border-[rgba(255,255,255,0.1)] dark:border-[rgba(255,255,255,0.1)] border-solid h-[300px] relative rounded-[16px] self-start shrink-0 w-full hover:border-[rgba(255,255,255,0.2)] transition-colors"
+                        >
+                          <div className="flex flex-col h-[300px] items-center justify-center overflow-hidden relative rounded-[inherit] w-full">
+                            <div className="basis-0 bg-gradient-to-r box-border flex from-bg-dark dark:from-bg-dark gap-[8px] grow items-center justify-center min-h-px min-w-px opacity-25 overflow-hidden p-[16px] relative shrink-0 to-[#151515] dark:to-[#151515] w-full">
+                              <div className="flex gap-[8px] items-center justify-center relative shrink-0">
+                                <div className="bg-[#282828] dark:bg-[#282828] border border-white dark:border-white relative rounded-[200px] shrink-0 size-[40px] flex items-center justify-center">
+                                  <div className="overflow-hidden relative rounded-[inherit] size-[40px] flex items-center justify-center">
+                                    <Plus
+                                      size={24}
+                                      weight="regular"
+                                      className="text-white transition-colors duration-300"
+                                    />
+                                  </div>
+                                </div>
+                                <p className="text-text-primary dark:text-white text-[16px] font-medium font-sans transition-colors duration-300">
+                                  Add link
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    ) : viewMode === "grid" ? (
+                      /* Grid View */
+                      <div className="gap-[24px] grid grid-cols-4 relative shrink-0 w-full">
+                        {bookmarks.map((bookmark) => (
+                          <BookmarkCard
+                            key={bookmark.id}
+                            bookmark={bookmark}
+                            viewMode="grid"
+                            onDelete={async () => {
+                              if (!currentSpaceId || !activeCollectionId)
+                                return;
+                              try {
+                                await deleteBookmark(
+                                  currentSpaceId,
+                                  activeCollectionId,
+                                  activeFolderId || undefined,
+                                  bookmark.id
+                                );
+                              } catch (error) {
+                                console.error(
+                                  "Error deleting bookmark:",
+                                  error
+                                );
+                              }
+                            }}
+                          />
+                        ))}
+                        {/* Add Link Card in Grid */}
+                        <button
+                          onClick={() => setShowAddBookmarkForm(true)}
+                          className="border-2 border-[rgba(255,255,255,0.1)] dark:border-[rgba(255,255,255,0.1)] border-solid h-[300px] relative rounded-[16px] shrink-0 w-full hover:border-[rgba(255,255,255,0.2)] transition-colors"
+                        >
+                          <div className="flex flex-col h-[300px] items-center justify-center overflow-hidden relative rounded-[inherit] w-full">
+                            <div className="basis-0 bg-gradient-to-r box-border flex from-bg-dark dark:from-bg-dark gap-[8px] grow items-center justify-center min-h-px min-w-px opacity-25 overflow-hidden p-[16px] relative shrink-0 to-[#151515] dark:to-[#151515] w-full">
+                              <div className="flex gap-[8px] items-center justify-center relative shrink-0">
+                                <div className="bg-[#282828] dark:bg-[#282828] border border-white dark:border-white relative rounded-[200px] shrink-0 size-[40px] flex items-center justify-center">
+                                  <div className="overflow-hidden relative rounded-[inherit] size-[40px] flex items-center justify-center">
+                                    <Plus
+                                      size={24}
+                                      weight="regular"
+                                      className="text-white transition-colors duration-300"
+                                    />
+                                  </div>
+                                </div>
+                                <p className="text-text-primary dark:text-white text-[16px] font-medium font-sans transition-colors duration-300">
+                                  Add link
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    ) : (
+                      /* List View */
+                      <div className="flex flex-col gap-[16px] relative shrink-0 w-full">
+                        {bookmarks.map((bookmark) => (
+                          <BookmarkCard
+                            key={bookmark.id}
+                            bookmark={bookmark}
+                            viewMode="list"
+                            onDelete={async () => {
+                              if (!currentSpaceId || !activeCollectionId)
+                                return;
+                              try {
+                                await deleteBookmark(
+                                  currentSpaceId,
+                                  activeCollectionId,
+                                  activeFolderId || undefined,
+                                  bookmark.id
+                                );
+                              } catch (error) {
+                                console.error(
+                                  "Error deleting bookmark:",
+                                  error
+                                );
+                              }
+                            }}
+                          />
+                        ))}
+                        {/* Add Link Card in List */}
+                        <button
+                          onClick={() => setShowAddBookmarkForm(true)}
+                          className="border-2 border-[rgba(255,255,255,0.1)] dark:border-[rgba(255,255,255,0.1)] border-solid h-[100px] relative rounded-[16px] shrink-0 w-full hover:border-[rgba(255,255,255,0.2)] transition-colors"
+                        >
+                          <div className="flex flex-col h-[100px] items-center justify-center overflow-hidden relative rounded-[inherit] w-full">
                             <div className="flex gap-[8px] items-center justify-center relative shrink-0">
                               <div className="bg-[#282828] dark:bg-[#282828] border border-white dark:border-white relative rounded-[200px] shrink-0 size-[40px] flex items-center justify-center">
                                 <div className="overflow-hidden relative rounded-[inherit] size-[40px] flex items-center justify-center">
@@ -495,15 +622,27 @@ export default function Dashboard() {
                               </p>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
         </div>
+      )}
+      {/* Add Bookmark Form Modal */}
+      {showAddBookmarkForm && currentSpaceId && activeCollectionId && (
+        <AddBookmarkForm
+          spaceId={currentSpaceId}
+          collectionId={activeCollectionId}
+          folderId={activeFolderId || undefined}
+          onClose={() => setShowAddBookmarkForm(false)}
+          onSuccess={() => {
+            setShowAddBookmarkForm(false);
+          }}
+        />
       )}
     </>
   );

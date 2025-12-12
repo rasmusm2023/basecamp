@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
-  Folder,
-  PencilSimple,
-  Settings,
-  Trash,
-  CaretRight,
-} from "./icons";
+import { Folder, PencilSimple, Settings, Trash, CaretRight } from "./icons";
 
-export type ContextMenuItemType = "space" | "folder" | "subfolder";
+export type ContextMenuItemType = "space" | "collection" | "folder";
 
 interface ContextMenuItem {
   label: string;
-  icon: React.ComponentType<{ size?: number; weight?: string; className?: string }>;
+  icon: React.ComponentType<{
+    size?: number;
+    weight?: string;
+    className?: string;
+  }>;
   onClick: () => void;
   isDestructive?: boolean;
 }
@@ -61,17 +59,17 @@ export default function ContextMenu({
     const rect = menuRef.current.getBoundingClientRect();
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
-    
+
     let newX = x;
     let newY = y;
-    
+
     if (x + rect.width > windowWidth) {
       newX = windowWidth - rect.width - 8;
     }
     if (y + rect.height > windowHeight) {
       newY = windowHeight - rect.height - 8;
     }
-    
+
     return [newX, newY];
   })();
 
@@ -94,7 +92,7 @@ export default function ContextMenu({
             const needsDividerBefore =
               index > 0 &&
               (index === 1 || // Before "Rename" (second item)
-               (item.isDestructive && !items[index - 1].isDestructive)); // Before first destructive item
+                (item.isDestructive && !items[index - 1].isDestructive)); // Before first destructive item
 
             return (
               <div key={index} className="w-full">
@@ -114,17 +112,13 @@ export default function ContextMenu({
                         size={16}
                         weight="regular"
                         className={`${
-                          item.isDestructive
-                            ? "text-[#ff7373]"
-                            : "text-white"
+                          item.isDestructive ? "text-[#ff7373]" : "text-white"
                         } transition-colors duration-300`}
                       />
                     </div>
                     <p
                       className={`font-['Inter:Medium',sans-serif] font-medium leading-[normal] not-italic relative shrink-0 text-[12px] text-center text-nowrap whitespace-pre ${
-                        item.isDestructive
-                          ? "text-[#ff7373]"
-                          : "text-white"
+                        item.isDestructive ? "text-[#ff7373]" : "text-white"
                       }`}
                     >
                       {item.label}
@@ -135,9 +129,7 @@ export default function ContextMenu({
                       size={16}
                       weight="regular"
                       className={`${
-                        item.isDestructive
-                          ? "text-[#ff7373]"
-                          : "text-white"
+                        item.isDestructive ? "text-[#ff7373]" : "text-white"
                       } transition-colors duration-300 opacity-50`}
                     />
                   </div>
@@ -150,4 +142,3 @@ export default function ContextMenu({
     </div>
   );
 }
-

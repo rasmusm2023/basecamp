@@ -3,16 +3,10 @@
 export interface Bookmark {
   id: string;
   url: string;
-  title: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SubFolder {
-  id: string;
-  name: string;
-  icon?: string; // Icon identifier/name
+  name: string; // Required, initially from page title
+  description?: string; // Optional, initially from website
+  image?: string; // Required, initially from website snapshot, can be user-uploaded
+  tags?: string[]; // Optional, array of tags
   createdAt: string;
   updatedAt: string;
 }
@@ -21,7 +15,15 @@ export interface Folder {
   id: string;
   name: string;
   icon?: string; // Icon identifier/name
-  subFolders: SubFolder[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  icon?: string; // Icon identifier/name
+  folders: Folder[];
   createdAt: string;
   updatedAt: string;
 }
@@ -32,4 +34,3 @@ export interface Space {
   createdAt: string;
   updatedAt: string;
 }
-

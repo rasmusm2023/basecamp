@@ -23,8 +23,8 @@ import { auth, db } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
 import {
   createSpace,
+  createCollection,
   createFolder,
-  createSubFolder,
 } from "@/lib/firebase/spaces";
 
 // Check if Firebase is configured
@@ -189,19 +189,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
         console.log("signUp: Space created with ID:", spaceId);
 
-              const folderId = await createFolder(
-                userCredential.user.uid,
-                spaceId,
-                "New collection"
-              );
-              console.log("signUp: Folder created with ID:", folderId);
+        const collectionId = await createCollection(
+          userCredential.user.uid,
+          spaceId,
+          "New collection"
+        );
+        console.log("signUp: Collection created with ID:", collectionId);
 
-              await createSubFolder(
-                userCredential.user.uid,
-                spaceId,
-                folderId,
-                "New folder"
-              );
+        await createFolder(
+          userCredential.user.uid,
+          spaceId,
+          collectionId,
+          "New folder"
+        );
         console.log("signUp: Sub-folder created successfully");
         console.log("signUp: Default space structure creation completed");
       } catch (error: any) {

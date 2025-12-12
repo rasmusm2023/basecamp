@@ -13,81 +13,117 @@ import {
   createSpace,
   updateSpaceName,
   deleteSpace,
+  createCollection,
+  updateCollectionName,
+  updateCollectionIcon,
+  deleteCollection,
   createFolder,
   updateFolderName,
   updateFolderIcon,
   deleteFolder,
-  createSubFolder,
-  updateSubFolderName,
-  updateSubFolderIcon,
-  deleteSubFolder,
+  createBookmarkInCollection,
+  createBookmarkInFolder,
+  updateBookmarkInCollection,
+  updateBookmarkInFolder,
+  deleteBookmarkFromCollection,
+  deleteBookmarkFromFolder,
 } from "@/lib/firebase/spaces";
 import {
   subscribeToSpaces,
+  subscribeToCollections,
   subscribeToFolders,
-  subscribeToSubFolders,
+  subscribeToBookmarksInCollection,
+  subscribeToBookmarksInFolder,
 } from "@/lib/firebase/spaces-realtime";
-import { Space, Folder, SubFolder } from "@/lib/types";
+import { Space, Collection, Folder, Bookmark } from "@/lib/types";
 import { Unsubscribe } from "firebase/firestore";
 
 interface SpacesContextType {
   spaces: Space[];
   currentSpaceId: string | null;
   currentSpace: Space | undefined;
-  folders: Folder[];
-  subFoldersMap: Record<string, SubFolder[]>;
+  collections: Collection[];
+  foldersMap: Record<string, Folder[]>;
   loading: boolean;
-  loadingFolders: boolean;
-  loadingSubFolders: Set<string>;
+  loadingCollections: boolean;
+  loadingFolders: Set<string>;
+  activeCollectionId: string | null;
   activeFolderId: string | null;
-  activeSubFolderId: string | null;
   setCurrentSpaceId: (id: string | null) => void;
+  setActiveCollection: (collectionId: string | null) => void;
   setActiveFolder: (folderId: string | null) => void;
-  setActiveSubFolder: (subFolderId: string | null) => void;
   refreshSpaces: () => Promise<void>;
   createNewSpace: (name: string) => Promise<string>;
   updateSpace: (spaceId: string, newName: string) => Promise<void>;
   deleteSpaceById: (spaceId: string) => Promise<void>;
-  refreshFolders: (spaceId: string) => Promise<Folder[]>;
+  refreshCollections: (spaceId: string) => Promise<Collection[]>;
+  createCollection: (
+    spaceId: string,
+    name: string,
+    icon?: string
+  ) => Promise<string>;
+  updateCollection: (
+    spaceId: string,
+    collectionId: string,
+    newName: string
+  ) => Promise<void>;
+  updateCollectionIcon: (
+    spaceId: string,
+    collectionId: string,
+    icon: string
+  ) => Promise<void>;
+  deleteCollectionById: (
+    spaceId: string,
+    collectionId: string
+  ) => Promise<void>;
+  getFolders: (spaceId: string, collectionId: string) => Promise<Folder[]>;
   createFolder: (
     spaceId: string,
+    collectionId: string,
     name: string,
     icon?: string
   ) => Promise<string>;
   updateFolder: (
     spaceId: string,
+    collectionId: string,
     folderId: string,
     newName: string
   ) => Promise<void>;
   updateFolderIcon: (
     spaceId: string,
+    collectionId: string,
     folderId: string,
     icon: string
   ) => Promise<void>;
-  deleteFolderById: (spaceId: string, folderId: string) => Promise<void>;
-  getSubFolders: (spaceId: string, folderId: string) => Promise<SubFolder[]>;
-  createSubFolder: (
+  deleteFolderById: (
     spaceId: string,
-    folderId: string,
+    collectionId: string,
+    folderId: string
+  ) => Promise<void>;
+  bookmarks: Bookmark[];
+  loadingBookmarks: boolean;
+  createBookmark: (
+    spaceId: string,
+    collectionId: string,
+    folderId: string | undefined,
+    url: string,
     name: string,
-    icon?: string
+    description?: string,
+    image?: string,
+    tags?: string[]
   ) => Promise<string>;
-  updateSubFolder: (
+  updateBookmark: (
     spaceId: string,
-    folderId: string,
-    subFolderId: string,
-    newName: string
+    collectionId: string,
+    folderId: string | undefined,
+    bookmarkId: string,
+    updates: Partial<Bookmark>
   ) => Promise<void>;
-  updateSubFolderIcon: (
+  deleteBookmark: (
     spaceId: string,
-    folderId: string,
-    subFolderId: string,
-    icon: string
-  ) => Promise<void>;
-  deleteSubFolderById: (
-    spaceId: string,
-    folderId: string,
-    subFolderId: string
+    collectionId: string,
+    folderId: string | undefined,
+    bookmarkId: string
   ) => Promise<void>;
 }
 
@@ -97,22 +133,23 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [currentSpaceId, setCurrentSpaceId] = useState<string | null>(null);
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [subFoldersMap, setSubFoldersMap] = useState<
-    Record<string, SubFolder[]>
-  >({});
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [foldersMap, setFoldersMap] = useState<Record<string, Folder[]>>({});
   const [loading, setLoading] = useState(true);
-  const [loadingFolders, setLoadingFolders] = useState(false);
-  const [loadingSubFolders, setLoadingSubFolders] = useState<Set<string>>(
-    new Set()
+  const [loadingCollections, setLoadingCollections] = useState(false);
+  const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
+  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(
+    null
   );
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
-  const [activeSubFolderId, setActiveSubFolderId] = useState<string | null>(null);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
 
   // Refs to store unsubscribe functions for cleanup
   const spacesUnsubscribeRef = useRef<Unsubscribe | null>(null);
-  const foldersUnsubscribeRef = useRef<Unsubscribe | null>(null);
-  const subFoldersUnsubscribeRef = useRef<Record<string, Unsubscribe>>({});
+  const collectionsUnsubscribeRef = useRef<Unsubscribe | null>(null);
+  const foldersUnsubscribeRef = useRef<Record<string, Unsubscribe>>({});
+  const bookmarksUnsubscribeRef = useRef<Unsubscribe | null>(null);
 
   const currentSpace = spaces.find((s) => s.id === currentSpaceId);
 
@@ -134,44 +171,62 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     setLoading(false);
 
     // Subscribe to spaces in real-time
-    console.log("[SpacesContext] Setting up spaces subscription for user:", user.uid);
+    console.log(
+      "[SpacesContext] Setting up spaces subscription for user:",
+      user.uid
+    );
     spacesUnsubscribeRef.current = subscribeToSpaces(
       user.uid,
       (fetchedSpaces) => {
-        console.log("[SpacesContext] Spaces received:", fetchedSpaces.length, fetchedSpaces);
+        console.log(
+          "[SpacesContext] Spaces received:",
+          fetchedSpaces.length,
+          fetchedSpaces
+        );
         setSpaces(fetchedSpaces);
 
         // Set first space as current if none is selected
         if (!currentSpaceId && fetchedSpaces.length > 0) {
-          console.log("[SpacesContext] Setting current space to:", fetchedSpaces[0].id);
+          console.log(
+            "[SpacesContext] Setting current space to:",
+            fetchedSpaces[0].id
+          );
           setCurrentSpaceId(fetchedSpaces[0].id);
         }
 
         // Create default space if none exists (in background, non-blocking)
         if (fetchedSpaces.length === 0) {
-          console.log("[SpacesContext] No spaces found, creating default space...");
+          console.log(
+            "[SpacesContext] No spaces found, creating default space..."
+          );
           createSpace(user.uid, "Your space")
             .then((spaceId) => {
               console.log("[SpacesContext] Default space created:", spaceId);
               return Promise.all([
                 spaceId,
-                createFolder(user.uid, spaceId, "New collection"),
+                createCollection(user.uid, spaceId, "New collection"),
               ]);
             })
-            .then(([spaceId, folderId]) => {
-              console.log("[SpacesContext] Default folder created:", folderId);
-              return createSubFolder(
+            .then(([spaceId, collectionId]) => {
+              console.log(
+                "[SpacesContext] Default collection created:",
+                collectionId
+              );
+              return createFolder(
                 user.uid,
                 spaceId,
-                folderId,
+                collectionId,
                 "New folder"
               );
             })
             .then(() => {
-              console.log("[SpacesContext] Default subfolder created");
+              console.log("[SpacesContext] Default folder created");
             })
             .catch((error) => {
-              console.error("[SpacesContext] Error creating default space structure:", error);
+              console.error(
+                "[SpacesContext] Error creating default space structure:",
+                error
+              );
             });
         }
       }
@@ -185,93 +240,107 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
-  // Set up real-time listener for folders when currentSpaceId changes
+  // Set up real-time listener for collections when currentSpaceId changes
   useEffect(() => {
     if (!user || !currentSpaceId) {
-      setFolders([]);
-      setSubFoldersMap({});
-      // Clean up folder subscription
-      if (foldersUnsubscribeRef.current) {
-        foldersUnsubscribeRef.current();
-        foldersUnsubscribeRef.current = null;
+      setCollections([]);
+      setFoldersMap({});
+      // Clean up collection subscription
+      if (collectionsUnsubscribeRef.current) {
+        collectionsUnsubscribeRef.current();
+        collectionsUnsubscribeRef.current = null;
       }
-      // Clean up all subfolder subscriptions
-      Object.values(subFoldersUnsubscribeRef.current).forEach((unsub) => {
+      // Clean up all folder subscriptions
+      Object.values(foldersUnsubscribeRef.current).forEach((unsub) => {
         unsub();
       });
-      subFoldersUnsubscribeRef.current = {};
+      foldersUnsubscribeRef.current = {};
       return;
     }
 
-    setLoadingFolders(true);
+    setLoadingCollections(true);
 
-    // Subscribe to folders in real-time
-    console.log("[SpacesContext] Setting up folders subscription for space:", currentSpaceId);
-    foldersUnsubscribeRef.current = subscribeToFolders(
+    // Subscribe to collections in real-time
+    console.log(
+      "[SpacesContext] Setting up collections subscription for space:",
+      currentSpaceId
+    );
+    collectionsUnsubscribeRef.current = subscribeToCollections(
       user.uid,
       currentSpaceId,
-      (fetchedFolders) => {
-        console.log("[SpacesContext] Folders received:", fetchedFolders.length, fetchedFolders);
-        setFolders(fetchedFolders);
-        setLoadingFolders(false);
+      (fetchedCollections) => {
+        console.log(
+          "[SpacesContext] Collections received:",
+          fetchedCollections.length,
+          fetchedCollections
+        );
+        setCollections(fetchedCollections);
+        setLoadingCollections(false);
 
-        // If space has no folders, create a default folder structure
-        if (fetchedFolders.length === 0) {
-          console.log("[SpacesContext] No folders found, creating default folder structure...");
-          createFolder(user.uid, currentSpaceId, "New collection")
-            .then((folderId) => {
-              console.log("[SpacesContext] Default folder created:", folderId);
-              return createSubFolder(
+        // If space has no collections, create a default collection structure
+        if (fetchedCollections.length === 0) {
+          console.log(
+            "[SpacesContext] No collections found, creating default collection structure..."
+          );
+          createCollection(user.uid, currentSpaceId, "New collection")
+            .then((collectionId) => {
+              console.log(
+                "[SpacesContext] Default collection created:",
+                collectionId
+              );
+              return createFolder(
                 user.uid,
                 currentSpaceId,
-                folderId,
+                collectionId,
                 "New folder"
               );
             })
             .then(() => {
-              console.log("[SpacesContext] Default subfolder created");
+              console.log("[SpacesContext] Default folder created");
             })
             .catch((error) => {
-              console.error("[SpacesContext] Error creating default folder structure:", error);
+              console.error(
+                "[SpacesContext] Error creating default collection structure:",
+                error
+              );
             });
-          return; // Exit early, folders will be created and subscription will fire again
+          return; // Exit early, collections will be created and subscription will fire again
         }
 
-        // Set up real-time listeners for all subfolders in parallel
-        const newSubFoldersMap: Record<string, SubFolder[]> = {};
-        const subFolderPromises = fetchedFolders.map(async (folder) => {
+        // Set up real-time listeners for all folders in parallel
+        const newFoldersMap: Record<string, Folder[]> = {};
+        const folderPromises = fetchedCollections.map(async (collection) => {
           return new Promise<void>((resolve) => {
-            // Subscribe to subfolders for this folder
-            if (!subFoldersUnsubscribeRef.current[folder.id]) {
-              subFoldersUnsubscribeRef.current[folder.id] =
-                subscribeToSubFolders(
-                  user.uid,
-                  currentSpaceId,
-                  folder.id,
-                  (subFolders) => {
-                    newSubFoldersMap[folder.id] = subFolders;
-                    setSubFoldersMap((prev) => ({
-                      ...prev,
-                      [folder.id]: subFolders,
-                    }));
+            // Subscribe to folders for this collection
+            if (!foldersUnsubscribeRef.current[collection.id]) {
+              foldersUnsubscribeRef.current[collection.id] = subscribeToFolders(
+                user.uid,
+                currentSpaceId,
+                collection.id,
+                (folders) => {
+                  newFoldersMap[collection.id] = folders;
+                  setFoldersMap((prev) => ({
+                    ...prev,
+                    [collection.id]: folders,
+                  }));
 
-                    // If folder has no subfolders, create one in the background
-                    if (subFolders.length === 0) {
-                      createSubFolder(
-                        user.uid,
-                        currentSpaceId,
-                        folder.id,
-                        "New folder"
-                      ).catch((error) => {
-                        console.error(
-                          `Error creating subfolder for folder ${folder.id}:`,
-                          error
-                        );
-                      });
-                    }
-                    resolve();
+                  // If collection has no folders, create one in the background
+                  if (folders.length === 0) {
+                    createFolder(
+                      user.uid,
+                      currentSpaceId,
+                      collection.id,
+                      "New folder"
+                    ).catch((error) => {
+                      console.error(
+                        `Error creating folder for collection ${collection.id}:`,
+                        error
+                      );
+                    });
                   }
-                );
+                  resolve();
+                }
+              );
             } else {
               // Already subscribed, just resolve
               resolve();
@@ -279,25 +348,72 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
           });
         });
 
-        // Wait for all subfolder subscriptions to be set up
-        Promise.all(subFolderPromises).catch((error) => {
-          console.error("Error setting up subfolder subscriptions:", error);
+        // Wait for all folder subscriptions to be set up
+        Promise.all(folderPromises).catch((error) => {
+          console.error("Error setting up folder subscriptions:", error);
         });
       }
     );
 
     return () => {
-      if (foldersUnsubscribeRef.current) {
-        foldersUnsubscribeRef.current();
-        foldersUnsubscribeRef.current = null;
+      if (collectionsUnsubscribeRef.current) {
+        collectionsUnsubscribeRef.current();
+        collectionsUnsubscribeRef.current = null;
       }
-      // Clean up all subfolder subscriptions for this space
-      Object.values(subFoldersUnsubscribeRef.current).forEach((unsub) => {
+      // Clean up all folder subscriptions for this space
+      Object.values(foldersUnsubscribeRef.current).forEach((unsub) => {
         unsub();
       });
-      subFoldersUnsubscribeRef.current = {};
+      foldersUnsubscribeRef.current = {};
     };
   }, [user, currentSpaceId]);
+
+  // Set up real-time listener for bookmarks when collection/folder is active
+  useEffect(() => {
+    if (!user || !currentSpaceId || !activeCollectionId) {
+      setBookmarks([]);
+      if (bookmarksUnsubscribeRef.current) {
+        bookmarksUnsubscribeRef.current();
+        bookmarksUnsubscribeRef.current = null;
+      }
+      return;
+    }
+
+    setLoadingBookmarks(true);
+
+    // Subscribe to bookmarks based on whether we're in a collection or folder
+    if (activeFolderId) {
+      // Subscribe to folder bookmarks
+      bookmarksUnsubscribeRef.current = subscribeToBookmarksInFolder(
+        user.uid,
+        currentSpaceId,
+        activeCollectionId,
+        activeFolderId,
+        (fetchedBookmarks) => {
+          setBookmarks(fetchedBookmarks);
+          setLoadingBookmarks(false);
+        }
+      );
+    } else {
+      // Subscribe to collection bookmarks
+      bookmarksUnsubscribeRef.current = subscribeToBookmarksInCollection(
+        user.uid,
+        currentSpaceId,
+        activeCollectionId,
+        (fetchedBookmarks) => {
+          setBookmarks(fetchedBookmarks);
+          setLoadingBookmarks(false);
+        }
+      );
+    }
+
+    return () => {
+      if (bookmarksUnsubscribeRef.current) {
+        bookmarksUnsubscribeRef.current();
+        bookmarksUnsubscribeRef.current = null;
+      }
+    };
+  }, [user, currentSpaceId, activeCollectionId, activeFolderId]);
 
   const refreshSpaces = async () => {
     // Real-time listener handles this automatically
@@ -330,114 +446,199 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshFolders = async (spaceId: string): Promise<Folder[]> => {
+  const refreshCollections = async (spaceId: string): Promise<Collection[]> => {
     // Real-time listener handles this automatically
-    // Return cached folders for API compatibility
-    return folders;
+    // Return cached collections for API compatibility
+    return collections;
   };
 
-  const createNewFolder = async (
+  const createNewCollection = async (
     spaceId: string,
     name: string,
     icon?: string
   ): Promise<string> => {
     if (!user) throw new Error("User not authenticated");
-    const folderId = await createFolder(user.uid, spaceId, name, icon);
+    const collectionId = await createCollection(user.uid, spaceId, name, icon);
+    // Real-time listener will update automatically
+    return collectionId;
+  };
+
+  const updateCollection = async (
+    spaceId: string,
+    collectionId: string,
+    newName: string
+  ): Promise<void> => {
+    if (!user) throw new Error("User not authenticated");
+    await updateCollectionName(user.uid, spaceId, collectionId, newName);
+    // Real-time listener will update automatically
+  };
+
+  const updateCollectionIcon = async (
+    spaceId: string,
+    collectionId: string,
+    icon: string
+  ): Promise<void> => {
+    if (!user) throw new Error("User not authenticated");
+    await updateCollectionIcon(user.uid, spaceId, collectionId, icon);
+    // Real-time listener will update automatically
+  };
+
+  const deleteCollectionById = async (
+    spaceId: string,
+    collectionId: string
+  ): Promise<void> => {
+    if (!user) throw new Error("User not authenticated");
+    await deleteCollection(user.uid, spaceId, collectionId);
+    // Real-time listener will update automatically
+  };
+
+  const getFolders = async (
+    spaceId: string,
+    collectionId: string
+  ): Promise<Folder[]> => {
+    // Return cached folders
+    return foldersMap[collectionId] || [];
+  };
+
+  const createNewFolder = async (
+    spaceId: string,
+    collectionId: string,
+    name: string,
+    icon?: string
+  ): Promise<string> => {
+    if (!user) throw new Error("User not authenticated");
+    const folderId = await createFolder(
+      user.uid,
+      spaceId,
+      collectionId,
+      name,
+      icon
+    );
     // Real-time listener will update automatically
     return folderId;
   };
 
   const updateFolder = async (
     spaceId: string,
+    collectionId: string,
     folderId: string,
     newName: string
   ): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
-    await updateFolderName(user.uid, spaceId, folderId, newName);
+    await updateFolderName(user.uid, spaceId, collectionId, folderId, newName);
     // Real-time listener will update automatically
   };
 
   const updateFolderIcon = async (
     spaceId: string,
+    collectionId: string,
     folderId: string,
     icon: string
   ): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
-    await updateFolderIcon(user.uid, spaceId, folderId, icon);
+    await updateFolderIcon(user.uid, spaceId, collectionId, folderId, icon);
     // Real-time listener will update automatically
   };
 
   const deleteFolderById = async (
     spaceId: string,
+    collectionId: string,
     folderId: string
   ): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
-    await deleteFolder(user.uid, spaceId, folderId);
+    await deleteFolder(user.uid, spaceId, collectionId, folderId);
     // Real-time listener will update automatically
   };
 
-  const getSubFolders = async (
+  // Bookmark management functions
+  const createBookmark = async (
     spaceId: string,
-    folderId: string
-  ): Promise<SubFolder[]> => {
-    // Return cached subfolders
-    return subFoldersMap[folderId] || [];
-  };
-
-  const createNewSubFolder = async (
-    spaceId: string,
-    folderId: string,
+    collectionId: string,
+    folderId: string | undefined,
+    url: string,
     name: string,
-    icon?: string
+    description?: string,
+    image?: string,
+    tags?: string[]
   ): Promise<string> => {
     if (!user) throw new Error("User not authenticated");
-    const subFolderId = await createSubFolder(
-      user.uid,
-      spaceId,
-      folderId,
-      name,
-      icon
-    );
-    // Real-time listener will update automatically
-    return subFolderId;
+    if (folderId) {
+      return createBookmarkInFolder(
+        user.uid,
+        spaceId,
+        collectionId,
+        folderId,
+        url,
+        name,
+        description,
+        image,
+        tags
+      );
+    } else {
+      return createBookmarkInCollection(
+        user.uid,
+        spaceId,
+        collectionId,
+        url,
+        name,
+        description,
+        image,
+        tags
+      );
+    }
   };
 
-  const updateSubFolder = async (
+  const updateBookmark = async (
     spaceId: string,
-    folderId: string,
-    subFolderId: string,
-    newName: string
+    collectionId: string,
+    folderId: string | undefined,
+    bookmarkId: string,
+    updates: Partial<Bookmark>
   ): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
-    await updateSubFolderName(
-      user.uid,
-      spaceId,
-      folderId,
-      subFolderId,
-      newName
-    );
-    // Real-time listener will update automatically
+    if (folderId) {
+      await updateBookmarkInFolder(
+        user.uid,
+        spaceId,
+        collectionId,
+        folderId,
+        bookmarkId,
+        updates
+      );
+    } else {
+      await updateBookmarkInCollection(
+        user.uid,
+        spaceId,
+        collectionId,
+        bookmarkId,
+        updates
+      );
+    }
   };
 
-  const updateSubFolderIcon = async (
+  const deleteBookmark = async (
     spaceId: string,
-    folderId: string,
-    subFolderId: string,
-    icon: string
+    collectionId: string,
+    folderId: string | undefined,
+    bookmarkId: string
   ): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
-    await updateSubFolderIcon(user.uid, spaceId, folderId, subFolderId, icon);
-    // Real-time listener will update automatically
-  };
-
-  const deleteSubFolderById = async (
-    spaceId: string,
-    folderId: string,
-    subFolderId: string
-  ): Promise<void> => {
-    if (!user) throw new Error("User not authenticated");
-    await deleteSubFolder(user.uid, spaceId, folderId, subFolderId);
-    // Real-time listener will update automatically
+    if (folderId) {
+      await deleteBookmarkFromFolder(
+        user.uid,
+        spaceId,
+        collectionId,
+        folderId,
+        bookmarkId
+      );
+    } else {
+      await deleteBookmarkFromCollection(
+        user.uid,
+        spaceId,
+        collectionId,
+        bookmarkId
+      );
+    }
   };
 
   return (
@@ -446,30 +647,35 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         spaces,
         currentSpaceId,
         currentSpace,
-        folders,
-        subFoldersMap,
+        collections,
+        foldersMap,
         loading,
+        loadingCollections,
         loadingFolders,
-        loadingSubFolders,
+        activeCollectionId,
         activeFolderId,
-        activeSubFolderId,
         setCurrentSpaceId,
+        setActiveCollection: setActiveCollectionId,
         setActiveFolder: setActiveFolderId,
-        setActiveSubFolder: setActiveSubFolderId,
         refreshSpaces,
         createNewSpace,
         updateSpace,
         deleteSpaceById,
-        refreshFolders,
+        refreshCollections,
+        createCollection: createNewCollection,
+        updateCollection,
+        updateCollectionIcon,
+        deleteCollectionById,
+        getFolders,
         createFolder: createNewFolder,
         updateFolder,
         updateFolderIcon,
         deleteFolderById,
-        getSubFolders,
-        createSubFolder: createNewSubFolder,
-        updateSubFolder,
-        updateSubFolderIcon,
-        deleteSubFolderById,
+        bookmarks,
+        loadingBookmarks,
+        createBookmark,
+        updateBookmark,
+        deleteBookmark,
       }}
     >
       {children}

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSpaces } from "../contexts/SpacesContext";
-import { Folder, SubFolder } from "../lib/types";
+import { Collection, Folder } from "../lib/types";
 import {
   Book,
   CaretRight,
@@ -153,85 +153,86 @@ function EditableItem({
   );
 }
 
-interface FolderItemProps {
-  folder: Folder;
+interface CollectionItemProps {
+  collection: Collection;
   spaceId: string;
-  subFolders: SubFolder[];
+  folders: Folder[];
   isExpanded: boolean;
   isActive: boolean;
-  activeSubFolderId: string | null;
+  activeFolderId: string | null;
   onToggle: () => void;
   onSetActive?: () => void;
-  onSetActiveSubFolder?: (subFolderId: string) => void;
-  onUpdateFolder: (newName: string) => Promise<void>;
-  onUpdateSubFolder: (subFolderId: string, newName: string) => Promise<void>;
-  onDeleteFolder: () => Promise<void>;
-  onDeleteSubFolder: (subFolderId: string) => Promise<void>;
-  onRenameFolder: () => void;
-  onRenameSubFolder: (subFolderId: string) => void;
+  onSetActiveFolder?: (folderId: string) => void;
+  onUpdateCollection: (newName: string) => Promise<void>;
+  onUpdateFolder: (folderId: string, newName: string) => Promise<void>;
+  onDeleteCollection: () => Promise<void>;
+  onDeleteFolder: (folderId: string) => Promise<void>;
+  onRenameCollection: () => void;
+  onRenameFolder: (folderId: string) => void;
+  editingCollectionId: string | null;
   editingFolderId: string | null;
-  editingSubFolderId: string | null;
-  onEditChange: (folderId: string | null, subFolderId: string | null) => void;
+  onEditChange: (collectionId: string | null, folderId: string | null) => void;
   onContextMenu: (
     e: React.MouseEvent,
-    type: "folder" | "subfolder",
+    type: "collection" | "folder",
     id: string,
     parentId?: string
   ) => void;
   onIconClick: (
     e: React.MouseEvent,
-    type: "folder" | "subfolder",
+    type: "collection" | "folder",
     id: string,
     parentId?: string
   ) => void;
-  isMenuOpen: (type: "folder" | "subfolder", id: string) => boolean;
+  isMenuOpen: (type: "collection" | "folder", id: string) => boolean;
 }
 
-function FolderItem({
-  folder,
+function CollectionItem({
+  collection,
   spaceId,
-  subFolders,
+  folders,
   isExpanded,
   isActive,
-  activeSubFolderId,
+  activeFolderId,
   onToggle,
+  onUpdateCollection,
   onUpdateFolder,
-  onUpdateSubFolder,
+  onDeleteCollection,
   onDeleteFolder,
-  onDeleteSubFolder,
+  onRenameCollection,
   onRenameFolder,
-  onRenameSubFolder,
+  editingCollectionId,
   editingFolderId,
-  editingSubFolderId,
   onEditChange,
   onContextMenu: handleContextMenu,
   onIconClick: handleIconClick,
   isMenuOpen,
   onSetActive,
-  onSetActiveSubFolder,
-}: FolderItemProps) {
+  onSetActiveFolder,
+}: CollectionItemProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [hoveredSubFolderId, setHoveredSubFolderId] = useState<string | null>(null);
-  
-  // Only show yellow if folder is active AND expanded AND has no active subfolder
-  // If folder is not expanded, it should never be yellow
-  const hasActiveSubFolder = activeSubFolderId !== null;
-  const shouldShowYellow = isActive && isExpanded && !hasActiveSubFolder;
-  
-  const folderTextColor = shouldShowYellow
+  const [hoveredFolderId, setHoveredFolderId] = useState<string | null>(null);
+
+  // Only show yellow if collection is active AND expanded AND has no active folder
+  // If collection is not expanded, it should never be yellow
+  const hasActiveFolder = activeFolderId !== null;
+  const shouldShowYellow = isActive && isExpanded && !hasActiveFolder;
+
+  const collectionTextColor = shouldShowYellow
     ? "text-[#FFFF31]"
     : "text-text-primary dark:text-white opacity-50";
-  const folderIconColor = shouldShowYellow
+  const collectionIconColor = shouldShowYellow
     ? "text-[#FFFF31]"
     : "text-text-primary dark:text-white opacity-50";
-  
-  const showFolderIcon = isHovered || isMenuOpen("folder", folder.id);
+
+  const showCollectionIcon =
+    isHovered || isMenuOpen("collection", collection.id);
 
   return (
     <div className="flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-      <div 
+      <div
         className={`flex gap-[4px] items-center relative shrink-0 w-full rounded-[4px] transition-all duration-300 ${
-          isHovered || isMenuOpen("folder", folder.id)
+          isHovered || isMenuOpen("collection", collection.id)
             ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
             : ""
         }`}
@@ -242,7 +243,7 @@ function FolderItem({
           className="flex gap-[4px] items-center relative shrink-0 flex-1 cursor-pointer"
           onClick={(e) => {
             // Don't toggle if clicking on the editable input
-            if ((e.target as HTMLElement).tagName === 'INPUT') {
+            if ((e.target as HTMLElement).tagName === "INPUT") {
               return;
             }
             onToggle();
@@ -259,13 +260,13 @@ function FolderItem({
               <CaretDown
                 size={16}
                 weight="regular"
-                className={`${folderIconColor} transition-colors duration-300`}
+                className={`${collectionIconColor} transition-colors duration-300`}
               />
             ) : (
               <CaretRight
                 size={16}
                 weight="regular"
-                className={`${folderIconColor} transition-colors duration-300`}
+                className={`${collectionIconColor} transition-colors duration-300`}
               />
             )}
           </button>
@@ -273,7 +274,7 @@ function FolderItem({
             <Book
               size={24}
               weight="regular"
-              className={`${folderIconColor} transition-colors duration-300`}
+              className={`${collectionIconColor} transition-colors duration-300`}
             />
           </div>
           <div
@@ -284,25 +285,25 @@ function FolderItem({
             className="flex-1 flex items-center cursor-pointer"
           >
             <EditableItem
-              name={folder.name}
-              onUpdate={onUpdateFolder}
+              name={collection.name}
+              onUpdate={onUpdateCollection}
               textSize="text-[20px]"
-              className={folderTextColor}
-              isEditing={editingFolderId === folder.id}
+              className={collectionTextColor}
+              isEditing={editingCollectionId === collection.id}
               onEditChange={(editing) =>
-                onEditChange(editing ? folder.id : null, null)
+                onEditChange(editing ? collection.id : null, null)
               }
             />
           </div>
         </div>
-        {showFolderIcon && (
+        {showCollectionIcon && (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleIconClick(e, "folder", folder.id);
+              handleIconClick(e, "collection", collection.id);
             }}
             className={`relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-all duration-300 ${
-              isMenuOpen("folder", folder.id)
+              isMenuOpen("collection", collection.id)
                 ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
                 : "hover:bg-bg-primary dark:hover:bg-[rgba(255,255,255,0.1)]"
             }`}
@@ -317,64 +318,65 @@ function FolderItem({
       </div>
       {isExpanded && (
         <div className="flex flex-col gap-[8px] items-start relative shrink-0 w-full pl-[28px]">
-          {subFolders.map((subFolder) => {
-            const isSubFolderActive = activeSubFolderId === subFolder.id;
-            const subFolderTextColor = isSubFolderActive
+          {folders.map((folder) => {
+            const isFolderActive = activeFolderId === folder.id;
+            const folderTextColor = isFolderActive
               ? "text-[#FFFF31]"
               : "text-text-primary dark:text-white opacity-50";
-            
-            const isSubFolderHovered = hoveredSubFolderId === subFolder.id;
-            const showSubFolderIcon = isSubFolderHovered || isMenuOpen("subfolder", subFolder.id);
-            
+
+            const isFolderHovered = hoveredFolderId === folder.id;
+            const showFolderIcon =
+              isFolderHovered || isMenuOpen("folder", folder.id);
+
             return (
               <div
-                key={subFolder.id}
+                key={folder.id}
                 className={`flex items-center justify-between relative shrink-0 w-full rounded-[4px] transition-all duration-300 ${
-                  isSubFolderHovered || isMenuOpen("subfolder", subFolder.id)
+                  isFolderHovered || isMenuOpen("folder", folder.id)
                     ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
                     : ""
                 }`}
-                onMouseEnter={() => setHoveredSubFolderId(subFolder.id)}
-                onMouseLeave={() => setHoveredSubFolderId(null)}
+                onMouseEnter={() => setHoveredFolderId(folder.id)}
+                onMouseLeave={() => setHoveredFolderId(null)}
               >
                 <div
                   className="flex items-center gap-[4px] relative shrink-0 flex-1 cursor-pointer"
                   onClick={(e) => {
                     // Don't toggle if clicking on the editable input
-                    if ((e.target as HTMLElement).tagName === 'INPUT') {
+                    if ((e.target as HTMLElement).tagName === "INPUT") {
                       return;
                     }
-                    // Set subfolder as active when clicked
-                    if (onSetActiveSubFolder) {
-                      onSetActiveSubFolder(subFolder.id);
+                    // Set folder as active when clicked
+                    if (onSetActiveFolder) {
+                      onSetActiveFolder(folder.id);
                     }
                   }}
                 >
                   <div className="flex flex-col gap-[8px] items-start relative shrink-0 flex-1">
                     <EditableItem
-                      name={`— ${subFolder.name}`}
+                      name={`— ${folder.name}`}
                       onUpdate={(newName) => {
                         const cleanName = newName.replace(/^—\s*/, "");
-                        onUpdateSubFolder(subFolder.id, cleanName);
+                        onUpdateFolder(folder.id, cleanName);
                       }}
                       textSize="text-[14px]"
-                      className={subFolderTextColor}
-                      isEditing={editingSubFolderId === subFolder.id}
+                      className={folderTextColor}
+                      isEditing={editingFolderId === folder.id}
                       onEditChange={(editing) =>
-                        onEditChange(null, editing ? subFolder.id : null)
+                        onEditChange(null, editing ? folder.id : null)
                       }
                     />
                   </div>
                 </div>
-                {showSubFolderIcon && (
+                {showFolderIcon && (
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleIconClick(e, "subfolder", subFolder.id, folder.id);
+                      handleIconClick(e, "folder", folder.id, collection.id);
                     }}
                     className={`relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-all duration-300 ${
-                      isMenuOpen("subfolder", subFolder.id)
+                      isMenuOpen("folder", folder.id)
                         ? "bg-bg-primary dark:bg-[rgba(255,255,255,0.1)]"
                         : "hover:bg-bg-primary dark:hover:bg-[rgba(255,255,255,0.1)]"
                     }`}
@@ -403,97 +405,102 @@ export default function Sidebar() {
     setCurrentSpaceId,
     loading,
     updateSpace,
+    updateCollection,
     updateFolder,
-    updateSubFolder,
     deleteSpaceById,
+    deleteCollectionById,
     deleteFolderById,
-    deleteSubFolderById,
+    createCollection,
     createFolder,
-    createSubFolder,
-    folders,
-    subFoldersMap,
+    collections,
+    foldersMap,
+    activeCollectionId,
     activeFolderId,
-    activeSubFolderId,
+    setActiveCollection,
     setActiveFolder,
-    setActiveSubFolder,
   } = useSpaces();
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(
     new Set()
   );
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
-    type: "space" | "folder" | "subfolder";
+    type: "space" | "collection" | "folder";
     id: string;
-    parentId?: string; // For subfolders, the folder ID
+    parentId?: string; // For folders, the collection ID
   } | null>(null);
-  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
-  const [editingSubFolderId, setEditingSubFolderId] = useState<string | null>(
+  const [editingCollectionId, setEditingCollectionId] = useState<string | null>(
     null
   );
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null);
 
   const currentSpace = spaces.find((s) => s.id === currentSpaceId);
 
-  // Auto-expand the first folder that has subfolders (only on initial load)
+  // Auto-expand the first collection that has folders (only on initial load)
   const hasAutoExpandedRef = useRef(false);
   useEffect(() => {
     if (
       !hasAutoExpandedRef.current &&
-      folders.length > 0 &&
-      Object.keys(subFoldersMap).length > 0 &&
-      expandedFolders.size === 0
+      collections.length > 0 &&
+      Object.keys(foldersMap).length > 0 &&
+      expandedCollections.size === 0
     ) {
-      const firstFolderWithSubfolders = folders.find(
-        (folder) => subFoldersMap[folder.id]?.length > 0
+      const firstCollectionWithFolders = collections.find(
+        (collection) => foldersMap[collection.id]?.length > 0
       );
-      if (firstFolderWithSubfolders) {
-        setExpandedFolders((prev) =>
-          new Set(prev).add(firstFolderWithSubfolders.id)
+      if (firstCollectionWithFolders) {
+        setExpandedCollections((prev) =>
+          new Set(prev).add(firstCollectionWithFolders.id)
         );
         hasAutoExpandedRef.current = true;
       }
     }
-  }, [folders, subFoldersMap, expandedFolders]);
+  }, [collections, foldersMap, expandedCollections]);
 
-  // Expand folder when it becomes active (from breadcrumb clicks)
+  // Expand collection when it becomes active (from breadcrumb clicks)
   useEffect(() => {
-    if (activeFolderId) {
-      setExpandedFolders((prev) => {
+    if (activeCollectionId) {
+      setExpandedCollections((prev) => {
         // Only expand if not already expanded
-        if (!prev.has(activeFolderId)) {
-          return new Set(prev).add(activeFolderId);
+        if (!prev.has(activeCollectionId)) {
+          return new Set(prev).add(activeCollectionId);
         }
         return prev;
       });
     }
-    // Only run when activeFolderId changes, not when expandedFolders changes
+    // Only run when activeCollectionId changes, not when expandedCollections changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFolderId]);
+  }, [activeCollectionId]);
 
-  const toggleFolder = (folderId: string) => {
-    setExpandedFolders((prev) => {
+  const toggleCollection = (collectionId: string) => {
+    setExpandedCollections((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(folderId)) {
-        newSet.delete(folderId);
+      if (newSet.has(collectionId)) {
+        newSet.delete(collectionId);
       } else {
-        newSet.add(folderId);
+        newSet.add(collectionId);
       }
       return newSet;
     });
   };
 
-  // Clear active folder state when it's collapsed
+  // Clear active collection/folder state when it's collapsed
   useEffect(() => {
-    if (activeFolderId && !expandedFolders.has(activeFolderId)) {
+    if (activeCollectionId && !expandedCollections.has(activeCollectionId)) {
+      setActiveCollection(null);
       setActiveFolder(null);
-      setActiveSubFolder(null);
     }
-  }, [expandedFolders, activeFolderId, setActiveFolder, setActiveSubFolder]);
+  }, [
+    expandedCollections,
+    activeCollectionId,
+    setActiveCollection,
+    setActiveFolder,
+  ]);
 
   const handleContextMenu = (
     e: React.MouseEvent,
-    type: "space" | "folder" | "subfolder",
+    type: "space" | "collection" | "folder",
     id: string,
     parentId?: string
   ) => {
@@ -509,7 +516,7 @@ export default function Sidebar() {
 
   const handleIconClick = (
     e: React.MouseEvent,
-    type: "folder" | "subfolder",
+    type: "collection" | "folder",
     id: string,
     parentId?: string
   ) => {
@@ -524,8 +531,13 @@ export default function Sidebar() {
     });
   };
 
-  const isMenuOpenFor = (type: "folder" | "subfolder", id: string): boolean => {
-    return contextMenu !== null && contextMenu.type === type && contextMenu.id === id;
+  const isMenuOpenFor = (
+    type: "collection" | "folder",
+    id: string
+  ): boolean => {
+    return (
+      contextMenu !== null && contextMenu.type === type && contextMenu.id === id
+    );
   };
 
   const handleUpdateSpace = async (newName: string) => {
@@ -534,20 +546,23 @@ export default function Sidebar() {
     setEditingSpaceId(null);
   };
 
-  const handleUpdateFolder = async (folderId: string, newName: string) => {
-    if (!currentSpaceId) return;
-    await updateFolder(currentSpaceId, folderId, newName);
-    setEditingFolderId(null);
-  };
-
-  const handleUpdateSubFolder = async (
-    folderId: string,
-    subFolderId: string,
+  const handleUpdateCollection = async (
+    collectionId: string,
     newName: string
   ) => {
     if (!currentSpaceId) return;
-    await updateSubFolder(currentSpaceId, folderId, subFolderId, newName);
-    setEditingSubFolderId(null);
+    await updateCollection(currentSpaceId, collectionId, newName);
+    setEditingCollectionId(null);
+  };
+
+  const handleUpdateFolder = async (
+    collectionId: string,
+    folderId: string,
+    newName: string
+  ) => {
+    if (!currentSpaceId) return;
+    await updateFolder(currentSpaceId, collectionId, folderId, newName);
+    setEditingFolderId(null);
   };
 
   const handleDeleteSpace = async () => {
@@ -556,22 +571,22 @@ export default function Sidebar() {
     setContextMenu(null);
   };
 
-  const handleDeleteFolder = async () => {
-    if (!contextMenu || contextMenu.type !== "folder" || !currentSpaceId)
+  const handleDeleteCollection = async () => {
+    if (!contextMenu || contextMenu.type !== "collection" || !currentSpaceId)
       return;
-    await deleteFolderById(currentSpaceId, contextMenu.id);
+    await deleteCollectionById(currentSpaceId, contextMenu.id);
     setContextMenu(null);
   };
 
-  const handleDeleteSubFolder = async () => {
+  const handleDeleteFolder = async () => {
     if (
       !contextMenu ||
-      contextMenu.type !== "subfolder" ||
+      contextMenu.type !== "folder" ||
       !currentSpaceId ||
       !contextMenu.parentId
     )
       return;
-    await deleteSubFolderById(
+    await deleteFolderById(
       currentSpaceId,
       contextMenu.parentId,
       contextMenu.id
@@ -583,74 +598,80 @@ export default function Sidebar() {
     if (!contextMenu) return;
     if (contextMenu.type === "space") {
       setEditingSpaceId(contextMenu.id);
+    } else if (contextMenu.type === "collection") {
+      setEditingCollectionId(contextMenu.id);
     } else if (contextMenu.type === "folder") {
       setEditingFolderId(contextMenu.id);
-    } else if (contextMenu.type === "subfolder") {
-      setEditingSubFolderId(contextMenu.id);
     }
     setContextMenu(null);
   };
 
-  const handleNewFolder = async () => {
+  const handleNewCollection = async () => {
     if (!contextMenu || !currentSpaceId) return;
 
     // Generate a unique collection name
-    let folderName = "New collection";
+    let collectionName = "New collection";
     let counter = 1;
-    const existingNames = folders.map((f) => f.name.toLowerCase());
+    const existingNames = collections.map((c) => c.name.toLowerCase());
 
-    while (existingNames.includes(folderName.toLowerCase())) {
-      folderName = `New collection ${counter}`;
+    while (existingNames.includes(collectionName.toLowerCase())) {
+      collectionName = `New collection ${counter}`;
       counter++;
     }
 
     try {
-      const folderId = await createFolder(currentSpaceId, folderName);
+      const collectionId = await createCollection(
+        currentSpaceId,
+        collectionName
+      );
+      setEditingCollectionId(collectionId);
+      setContextMenu(null);
+    } catch (error) {
+      console.error("Error creating collection:", error);
+      // If it still fails, try with a timestamp-based name
+      const timestampName = `New collection ${Date.now()}`;
+      const collectionId = await createCollection(
+        currentSpaceId,
+        timestampName
+      );
+      setEditingCollectionId(collectionId);
+      setContextMenu(null);
+    }
+  };
+
+  const handleNewFolder = async () => {
+    if (!contextMenu || !currentSpaceId || contextMenu.type !== "collection")
+      return;
+
+    // Generate a unique folder name
+    const existingFolders = foldersMap[contextMenu.id] || [];
+    let folderName = "New folder";
+    let counter = 1;
+    const existingNames = existingFolders.map((f) => f.name.toLowerCase());
+
+    while (existingNames.includes(folderName.toLowerCase())) {
+      folderName = `New folder ${counter}`;
+      counter++;
+    }
+
+    try {
+      const folderId = await createFolder(
+        currentSpaceId,
+        contextMenu.id,
+        folderName
+      );
       setEditingFolderId(folderId);
       setContextMenu(null);
     } catch (error) {
       console.error("Error creating folder:", error);
       // If it still fails, try with a timestamp-based name
-      const timestampName = `New collection ${Date.now()}`;
-      const folderId = await createFolder(currentSpaceId, timestampName);
-      setEditingFolderId(folderId);
-      setContextMenu(null);
-    }
-  };
-
-  const handleNewSubFolder = async () => {
-    if (!contextMenu || !currentSpaceId || contextMenu.type !== "folder")
-      return;
-
-    // Generate a unique folder name
-    const existingSubFolders = subFoldersMap[contextMenu.id] || [];
-    let subFolderName = "New folder";
-    let counter = 1;
-    const existingNames = existingSubFolders.map((sf) => sf.name.toLowerCase());
-
-    while (existingNames.includes(subFolderName.toLowerCase())) {
-      subFolderName = `New folder ${counter}`;
-      counter++;
-    }
-
-    try {
-      const subFolderId = await createSubFolder(
-        currentSpaceId,
-        contextMenu.id,
-        subFolderName
-      );
-      setEditingSubFolderId(subFolderId);
-      setContextMenu(null);
-    } catch (error) {
-      console.error("Error creating sub-folder:", error);
-      // If it still fails, try with a timestamp-based name
       const timestampName = `New folder ${Date.now()}`;
-      const subFolderId = await createSubFolder(
+      const folderId = await createFolder(
         currentSpaceId,
         contextMenu.id,
         timestampName
       );
-      setEditingSubFolderId(subFolderId);
+      setEditingFolderId(folderId);
       setContextMenu(null);
     }
   };
@@ -660,13 +681,35 @@ export default function Sidebar() {
 
     const items: ContextMenuItem[] = [];
 
-    if (contextMenu.type === "folder") {
+    if (contextMenu.type === "collection") {
       items.push(
         {
           label: "New folder",
           icon: FolderPlus,
           onClick: handleNewFolder,
         },
+        {
+          label: "Rename collection",
+          icon: TextT,
+          onClick: handleRename,
+        },
+        {
+          label: "Collection settings",
+          icon: Settings,
+          onClick: () => {
+            // TODO: Implement collection settings
+            setContextMenu(null);
+          },
+        },
+        {
+          label: "Delete collection",
+          icon: Trash,
+          onClick: handleDeleteCollection,
+          isDestructive: true,
+        }
+      );
+    } else if (contextMenu.type === "folder") {
+      items.push(
         {
           label: "Rename folder",
           icon: TextT,
@@ -684,70 +727,6 @@ export default function Sidebar() {
           label: "Delete folder",
           icon: Trash,
           onClick: handleDeleteFolder,
-          isDestructive: true,
-        }
-      );
-    } else if (contextMenu.type === "subfolder") {
-      items.push(
-        {
-          label: "New folder",
-          icon: FolderPlus,
-          onClick: async () => {
-            if (!contextMenu.parentId || !currentSpaceId) return;
-
-            // Generate a unique folder name
-            const existingSubFolders =
-              subFoldersMap[contextMenu.parentId] || [];
-            let subFolderName = "New folder";
-            let counter = 1;
-            const existingNames = existingSubFolders.map((sf) =>
-              sf.name.toLowerCase()
-            );
-
-            while (existingNames.includes(subFolderName.toLowerCase())) {
-              subFolderName = `New folder ${counter}`;
-              counter++;
-            }
-
-            try {
-              const subFolderId = await createSubFolder(
-                currentSpaceId,
-                contextMenu.parentId,
-                subFolderName
-              );
-              setEditingSubFolderId(subFolderId);
-              setContextMenu(null);
-            } catch (error) {
-              console.error("Error creating folder:", error);
-              // If it still fails, try with a timestamp-based name
-              const timestampName = `New folder ${Date.now()}`;
-              const subFolderId = await createSubFolder(
-                currentSpaceId,
-                contextMenu.parentId,
-                timestampName
-              );
-              setEditingSubFolderId(subFolderId);
-              setContextMenu(null);
-            }
-          },
-        },
-        {
-          label: "Rename folder",
-          icon: TextT,
-          onClick: handleRename,
-        },
-        {
-          label: "Folder settings",
-          icon: Settings,
-          onClick: () => {
-            // TODO: Implement folder settings
-            setContextMenu(null);
-          },
-        },
-        {
-          label: "Delete folder",
-          icon: Trash,
-          onClick: handleDeleteSubFolder,
           isDestructive: true,
         }
       );
@@ -815,13 +794,13 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Collapse Folders Button */}
+        {/* Collapse Collections Button */}
         <div
           onClick={() => {
-            setExpandedFolders(new Set());
-            // Clear active folder/subfolder when collapsing all
+            setExpandedCollections(new Set());
+            // Clear active collection/folder when collapsing all
+            setActiveCollection(null);
             setActiveFolder(null);
-            setActiveSubFolder(null);
           }}
           className="absolute bg-[#282828] box-border flex gap-[8px] items-center justify-center left-[15px] overflow-hidden p-[8px] rounded-[16px] top-[94px] w-[120px] cursor-pointer hover:opacity-80 transition-opacity"
         >
@@ -879,60 +858,58 @@ export default function Sidebar() {
         {/* Divider */}
         <div className="absolute h-px bg-[rgba(255,255,255,0.1)] dark:bg-[rgba(255,255,255,0.1)] left-[15px] top-[138px] w-[248px]" />
 
-        {/* Folder Navigation */}
+        {/* Collection Navigation */}
         <div className="absolute flex flex-col gap-[8px] items-start left-[15px] top-[149px] w-[259px]">
-          {folders.map((folder, index) => (
+          {collections.map((collection, index) => (
             <div
-              key={folder.id}
+              key={collection.id}
               className="flex flex-col gap-[16px] items-start relative shrink-0 w-full"
             >
-              <FolderItem
-                folder={folder}
+              <CollectionItem
+                collection={collection}
                 spaceId={currentSpaceId || ""}
-                subFolders={subFoldersMap[folder.id] || []}
-                isExpanded={expandedFolders.has(folder.id)}
-                isActive={activeFolderId === folder.id}
-                activeSubFolderId={activeSubFolderId}
+                folders={foldersMap[collection.id] || []}
+                isExpanded={expandedCollections.has(collection.id)}
+                isActive={activeCollectionId === collection.id}
+                activeFolderId={activeFolderId}
                 onToggle={() => {
-                  const wasExpanded = expandedFolders.has(folder.id);
-                  toggleFolder(folder.id);
+                  const wasExpanded = expandedCollections.has(collection.id);
+                  toggleCollection(collection.id);
                   // Only set as active if expanding, not collapsing
                   if (!wasExpanded) {
-                    setActiveFolder(folder.id);
-                    setActiveSubFolder(null);
+                    setActiveCollection(collection.id);
+                    setActiveFolder(null);
                   }
                 }}
-                onSetActive={() => setActiveFolder(folder.id)}
-                onSetActiveSubFolder={(subFolderId) => {
-                  setActiveSubFolder(subFolderId);
-                  setActiveFolder(folder.id);
+                onSetActive={() => setActiveCollection(collection.id)}
+                onSetActiveFolder={(folderId) => {
+                  setActiveFolder(folderId);
+                  setActiveCollection(collection.id);
                 }}
-                onUpdateFolder={(newName) =>
-                  handleUpdateFolder(folder.id, newName)
+                onUpdateCollection={(newName) =>
+                  handleUpdateCollection(collection.id, newName)
                 }
-                onUpdateSubFolder={(subFolderId, newName) =>
-                  handleUpdateSubFolder(folder.id, subFolderId, newName)
+                onUpdateFolder={(folderId, newName) =>
+                  handleUpdateFolder(collection.id, folderId, newName)
                 }
-                onDeleteFolder={handleDeleteFolder}
-                onDeleteSubFolder={(subFolderId) => {
+                onDeleteCollection={handleDeleteCollection}
+                onDeleteFolder={(folderId) => {
                   if (!currentSpaceId) return;
-                  deleteSubFolderById(currentSpaceId, folder.id, subFolderId);
+                  deleteFolderById(currentSpaceId, collection.id, folderId);
                 }}
-                onRenameFolder={() => setEditingFolderId(folder.id)}
-                onRenameSubFolder={(subFolderId) =>
-                  setEditingSubFolderId(subFolderId)
-                }
+                onRenameCollection={() => setEditingCollectionId(collection.id)}
+                onRenameFolder={(folderId) => setEditingFolderId(folderId)}
+                editingCollectionId={editingCollectionId}
                 editingFolderId={editingFolderId}
-                editingSubFolderId={editingSubFolderId}
-                onEditChange={(folderId, subFolderId) => {
+                onEditChange={(collectionId, folderId) => {
+                  setEditingCollectionId(collectionId);
                   setEditingFolderId(folderId);
-                  setEditingSubFolderId(subFolderId);
                 }}
                 onContextMenu={handleContextMenu}
                 onIconClick={handleIconClick}
                 isMenuOpen={isMenuOpenFor}
               />
-              {index < folders.length - 1 && (
+              {index < collections.length - 1 && (
                 <div className="h-px bg-[rgba(255,255,255,0.15)] dark:bg-[rgba(255,255,255,0.15)] relative shrink-0 w-[248px]" />
               )}
             </div>

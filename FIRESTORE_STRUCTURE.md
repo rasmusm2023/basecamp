@@ -1,0 +1,210 @@
+# Firestore Data Structure
+
+## Overview
+
+All data is stored in Firestore using a hierarchical structure under each user's document. Here's how everything is organized:
+
+## Complete Data Structure
+
+```
+users/
+  {userId}/                          # User document (stores user profile data)
+    spaces/                          # Subcollection: User's spaces
+      {spaceId}/                     # Space document
+        name: string
+        createdAt: string
+        updatedAt: string
+
+        collections/                 # Subcollection: Collections in this space
+          {collectionId}/            # Collection document
+            name: string
+            icon?: string
+            folders: Folder[]         # Array of folders (for UI, not stored in Firestore)
+            createdAt: string
+            updatedAt: string
+
+            bookmarks/               # Subcollection: Bookmarks directly in collection
+              {bookmarkId}/          # Bookmark document
+                id: string
+                url: string
+                name: string
+                description?: string
+                image?: string
+                tags?: string[]
+                createdAt: string
+                updatedAt: string
+
+            folders/                 # Subcollection: Folders in this collection
+              {folderId}/            # Folder document
+                name: string
+                icon?: string
+                createdAt: string
+                updatedAt: string
+
+                bookmarks/           # Subcollection: Bookmarks in folder
+                  {bookmarkId}/      # Bookmark document
+                    id: string
+                    url: string
+                    name: string
+                    description?: string
+                    image?: string
+                    tags?: string[]
+                    createdAt: string
+                    updatedAt: string
+```
+
+## Path Examples
+
+### Creating a Space
+
+```typescript
+// Path: users/{userId}/spaces/{spaceId}
+const spaceRef = doc(collection(db, `users/${userId}/spaces`));
+```
+
+### Creating a Collection
+
+```typescript
+// Path: users/{userId}/spaces/{spaceId}/collections/{collectionId}
+const collectionRef = doc(
+  collection(db, `users/${userId}/spaces/${spaceId}/collections`)
+);
+```
+
+### Creating a Folder
+
+```typescript
+// Path: users/{userId}/spaces/{spaceId}/collections/{collectionId}/folders/{folderId}
+const folderRef = doc(
+  collection(
+    db,
+    `users/${userId}/spaces/${spaceId}/collections/${collectionId}/folders`
+  )
+);
+```
+
+### Creating a Bookmark in a Collection
+
+```typescript
+// Path: users/{userId}/spaces/{spaceId}/collections/{collectionId}/bookmarks/{bookmarkId}
+const bookmarkRef = doc(
+  collection(
+    db,
+    `users/${userId}/spaces/${spaceId}/collections/${collectionId}/bookmarks`
+  )
+);
+```
+
+### Creating a Bookmark in a Folder
+
+```typescript
+// Path: users/{userId}/spaces/{spaceId}/collections/{collectionId}/folders/{folderId}/bookmarks/{bookmarkId}
+const bookmarkRef = doc(
+  collection(
+    db,
+    `users/${userId}/spaces/${spaceId}/collections/${collectionId}/folders/${folderId}/bookmarks`
+  )
+);
+```
+
+## Data Types
+
+### Space
+
+```typescript
+{
+  id: string; // Auto-generated document ID
+  name: string;
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+}
+```
+
+### Folder (Collection)
+
+```typescript
+{
+  id: string;              // Auto-generated document ID
+  name: string;
+  icon?: string;          // Optional icon identifier
+  createdAt: string;      // ISO timestamp
+  updatedAt: string;      // ISO timestamp
+}
+```
+
+### SubFolder
+
+```typescript
+{
+  id: string;              // Auto-generated document ID
+  name: string;
+  icon?: string;          // Optional icon identifier
+  createdAt: string;      // ISO timestamp
+  updatedAt: string;      // ISO timestamp
+}
+```
+
+### Bookmark (Link)
+
+```typescript
+{
+  id: string;              // Auto-generated document ID
+  url: string;             // Required: The bookmark URL
+  name: string;            // Required: Display name (from page title)
+  description?: string;    // Optional: Description (from website)
+  image?: string;          // Optional: Screenshot/image URL (from Firebase Storage)
+  tags?: string[];         // Optional: Array of tag strings
+  createdAt: string;       // ISO timestamp
+  updatedAt: string;        // ISO timestamp
+}
+```
+
+## Key Points
+
+1. **User Isolation**: Each user's data is completely isolated under `users/{userId}/`
+
+2. **Hierarchical Structure**:
+
+   - Spaces contain Collections
+   - Collections contain Bookmarks AND Folders
+   - Folders contain Bookmarks
+
+3. **Subcollections**: Everything uses Firestore subcollections (not nested objects), which allows for:
+
+   - Better querying
+   - Real-time listeners
+   - Scalability
+
+4. **Document IDs**: All document IDs are auto-generated by Firestore using `doc(collection(...))`
+
+5. **Timestamps**: All timestamps are stored as ISO strings (not Firestore Timestamps) for easier client-side handling
+
+## Storage Location Reference
+
+| Item                     | Firestore Path                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| User Profile             | `users/{userId}`                                                                                       |
+| Space                    | `users/{userId}/spaces/{spaceId}`                                                                      |
+| Collection               | `users/{userId}/spaces/{spaceId}/collections/{collectionId}`                                           |
+| Folder                   | `users/{userId}/spaces/{spaceId}/collections/{collectionId}/folders/{folderId}`                        |
+| Bookmark (in collection) | `users/{userId}/spaces/{spaceId}/collections/{collectionId}/bookmarks/{bookmarkId}`                    |
+| Bookmark (in folder)     | `users/{userId}/spaces/{spaceId}/collections/{collectionId}/folders/{folderId}/bookmarks/{bookmarkId}` |
+
+## Image Storage
+
+Bookmark images are stored in **Firebase Storage** (not Firestore), with the Storage URL stored in the bookmark document:
+
+- **Storage Path**: `bookmarks/{userId}/{timestamp}_screenshot.jpg`
+- **URL Format**: `https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token={token}`
+- **Stored in Bookmark**: The `image` field contains the full Storage download URL
+
+## Real-time Updates
+
+All collections use Firestore's `onSnapshot` for real-time updates:
+
+- Spaces: `subscribeToSpaces()`
+- Collections: `subscribeToCollections()`
+- Folders: `subscribeToFolders()`
+- Bookmarks: `subscribeToBookmarksInCollection()` or `subscribeToBookmarksInFolder()`
+
+This means the UI automatically updates when data changes, without needing to refresh.

@@ -1,4 +1,4 @@
-// Real-time Firestore listeners for spaces, folders, and subfolders
+// Real-time Firestore listeners for spaces, collections, and folders
 // These use onSnapshot for real-time updates and better performance
 
 import {
@@ -7,9 +7,10 @@ import {
   onSnapshot,
   Unsubscribe,
   query,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "./config";
-import { Space, Folder, SubFolder } from "../types";
+import { Space, Collection, Folder, Bookmark } from "../types";
 
 // Helper to check if Firebase is available
 const isFirebaseAvailable = () => {
@@ -54,11 +55,55 @@ export const subscribeToSpaces = (
   );
 };
 
+// ==================== COLLECTIONS ====================
+
+export const subscribeToCollections = (
+  userId: string,
+  spaceId: string,
+  callback: (collections: Collection[]) => void
+): Unsubscribe => {
+  if (!isFirebaseAvailable()) {
+    callback([]);
+    return () => {}; // Return no-op unsubscribe
+  }
+
+  const collectionsRef = collection(
+    db!,
+    `users/${userId}/spaces/${spaceId}/collections`
+  );
+  const collectionsQuery = query(collectionsRef);
+
+  return onSnapshot(
+    collectionsQuery,
+    (snapshot) => {
+      const collections = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        folders: [],
+        ...doc.data(),
+      })) as Collection[];
+
+      // Sort by createdAt
+      collections.sort((a, b) => {
+        const aTime = new Date(a.createdAt).getTime();
+        const bTime = new Date(b.createdAt).getTime();
+        return aTime - bTime;
+      });
+
+      callback(collections);
+    },
+    (error) => {
+      console.error("Error in collections subscription:", error);
+      callback([]);
+    }
+  );
+};
+
 // ==================== FOLDERS ====================
 
 export const subscribeToFolders = (
   userId: string,
   spaceId: string,
+  collectionId: string,
   callback: (folders: Folder[]) => void
 ): Unsubscribe => {
   if (!isFirebaseAvailable()) {
@@ -68,7 +113,7 @@ export const subscribeToFolders = (
 
   const foldersRef = collection(
     db!,
-    `users/${userId}/spaces/${spaceId}/folders`
+    `users/${userId}/spaces/${spaceId}/collections/${collectionId}/folders`
   );
   const foldersQuery = query(foldersRef);
 
@@ -96,44 +141,74 @@ export const subscribeToFolders = (
   );
 };
 
-// ==================== SUBFOLDERS ====================
+// ==================== BOOKMARKS ====================
 
-export const subscribeToSubFolders = (
+// Subscribe to bookmarks in a collection
+export const subscribeToBookmarksInCollection = (
   userId: string,
   spaceId: string,
-  folderId: string,
-  callback: (subFolders: SubFolder[]) => void
+  collectionId: string,
+  callback: (bookmarks: Bookmark[]) => void
 ): Unsubscribe => {
   if (!isFirebaseAvailable()) {
     callback([]);
     return () => {}; // Return no-op unsubscribe
   }
 
-  const subFoldersRef = collection(
+  const bookmarksRef = collection(
     db!,
-    `users/${userId}/spaces/${spaceId}/folders/${folderId}/subfolders`
+    `users/${userId}/spaces/${spaceId}/collections/${collectionId}/bookmarks`
   );
-  const subFoldersQuery = query(subFoldersRef);
+  const bookmarksQuery = query(bookmarksRef, orderBy("createdAt", "asc"));
 
   return onSnapshot(
-    subFoldersQuery,
+    bookmarksQuery,
     (snapshot) => {
-      const subFolders = snapshot.docs.map((doc) => ({
+      const bookmarks = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as SubFolder[];
+      })) as Bookmark[];
 
-      // Sort by createdAt
-      subFolders.sort((a, b) => {
-        const aTime = new Date(a.createdAt).getTime();
-        const bTime = new Date(b.createdAt).getTime();
-        return aTime - bTime;
-      });
-
-      callback(subFolders);
+      callback(bookmarks);
     },
     (error) => {
-      console.error("Error in subfolders subscription:", error);
+      console.error("Error in bookmarks subscription:", error);
+      callback([]);
+    }
+  );
+};
+
+// Subscribe to bookmarks in a folder
+export const subscribeToBookmarksInFolder = (
+  userId: string,
+  spaceId: string,
+  collectionId: string,
+  folderId: string,
+  callback: (bookmarks: Bookmark[]) => void
+): Unsubscribe => {
+  if (!isFirebaseAvailable()) {
+    callback([]);
+    return () => {}; // Return no-op unsubscribe
+  }
+
+  const bookmarksRef = collection(
+    db!,
+    `users/${userId}/spaces/${spaceId}/collections/${collectionId}/folders/${folderId}/bookmarks`
+  );
+  const bookmarksQuery = query(bookmarksRef, orderBy("createdAt", "asc"));
+
+  return onSnapshot(
+    bookmarksQuery,
+    (snapshot) => {
+      const bookmarks = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Bookmark[];
+
+      callback(bookmarks);
+    },
+    (error) => {
+      console.error("Error in bookmarks subscription:", error);
       callback([]);
     }
   );
