@@ -34,10 +34,16 @@ export default function RootLayout({
           <SpacesProvider>
             <ThemeProvider>
               <div className="flex flex-col min-h-screen">
-                <div className="w-full px-[36px] py-[16px] flex justify-center">
-                  <Header />
+                <div className="w-full flex justify-center">
+                  <div className="w-full max-w-[2560px] px-[36px] py-[16px]">
+                    <Header />
+                  </div>
                 </div>
-                <ContentWrapper>{children}</ContentWrapper>
+                <div className="w-full flex justify-center">
+                  <div className="w-full max-w-[2560px]">
+                    <ContentWrapper>{children}</ContentWrapper>
+                  </div>
+                </div>
               </div>
             </ThemeProvider>
           </SpacesProvider>

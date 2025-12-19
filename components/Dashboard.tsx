@@ -106,10 +106,13 @@ export default function Dashboard() {
           spaceName={currentSpace?.name || "space"}
         />
       )}
-      {/* Left Sidebar - Fixed position, always centered in viewport */}
+      {/* Left Sidebar - Fixed position, constrained within max-width container */}
       <div
         className="fixed z-10"
-        style={{ top: "50vh", transform: "translateY(-50%)", left: "36px" }}
+        style={{ 
+          top: "36px",
+          left: "max(36px, calc((100vw - 2560px) / 2 + 36px))"
+        }}
       >
         <Sidebar />
       </div>
