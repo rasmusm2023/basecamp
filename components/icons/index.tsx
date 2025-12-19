@@ -36,6 +36,9 @@ export {
   TextT,
   Circle,
   DotsThree,
+  CodeSimple,
+  Command,
+  Planet,
 } from "phosphor-react";
 
 // Special components that need custom logic/styling
