@@ -9,6 +9,8 @@ export interface Bookmark {
   tags?: string[]; // Optional, array of tags
   createdAt: string;
   updatedAt: string;
+  /** Set by UI when bookmark is from a folder (for collection view); not persisted to Firestore */
+  folderId?: string;
 }
 
 export interface Folder {
