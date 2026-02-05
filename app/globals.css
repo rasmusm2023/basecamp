@@ -313,12 +313,20 @@ input::placeholder {
 
 /* Input field background gradient */
 .input-bg-gradient {
-  background: linear-gradient(to top, var(--color-input-bg-start), var(--color-input-bg-end));
+  background: linear-gradient(
+    to top,
+    var(--color-input-bg-start),
+    var(--color-input-bg-end)
+  );
 }
 
 /* Selected button background gradient - Light mode only */
 .selected-bg-gradient {
-  background: linear-gradient(to right, var(--color-selected-bg-start), var(--color-selected-bg-end));
+  background: linear-gradient(
+    to right,
+    var(--color-selected-bg-start),
+    var(--color-selected-bg-end)
+  );
 }
 
 /* Dark mode selected button - yellow background with bright yellow border and glow (from Figma 38-856) */
@@ -336,7 +344,11 @@ input::placeholder {
 
 /* Stylized text gradient */
 .text-gradient-basecamp {
-  background: linear-gradient(91deg, var(--color-gradient-start) 0.13%, var(--color-gradient-end) 99.87%);
+  background: linear-gradient(
+    91deg,
+    var(--color-gradient-start) 0.13%,
+    var(--color-gradient-end) 99.87%
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -391,8 +403,7 @@ input::placeholder {
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   background: rgba(255, 255, 255, 0.05);
-  box-shadow:
-    0 8px 32px 0 rgba(0, 0, 0, 0.1),
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
 }
 

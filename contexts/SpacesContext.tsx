@@ -149,7 +149,9 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   const spacesUnsubscribeRef = useRef<Unsubscribe | null>(null);
   const collectionsUnsubscribeRef = useRef<Unsubscribe | null>(null);
   const foldersUnsubscribeRef = useRef<Record<string, Unsubscribe>>({});
-  const bookmarksUnsubscribeRef = useRef<Unsubscribe | null>(null);
+  const bookmarksUnsubscribeRef = useRef<(() => void) | null>(null);
+  const collectionBookmarksRef = useRef<Bookmark[]>([]);
+  const folderBookmarksRef = useRef<Record<string, Bookmark[]>>({});
 
   const currentSpace = spaces.find((s) => s.id === currentSpaceId);
 
@@ -372,6 +374,8 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || !currentSpaceId || !activeCollectionId) {
       setBookmarks([]);
+      collectionBookmarksRef.current = [];
+      folderBookmarksRef.current = {};
       if (bookmarksUnsubscribeRef.current) {
         bookmarksUnsubscribeRef.current();
         bookmarksUnsubscribeRef.current = null;
@@ -381,30 +385,74 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
 
     setLoadingBookmarks(true);
 
-    // Subscribe to bookmarks based on whether we're in a collection or folder
     if (activeFolderId) {
-      // Subscribe to folder bookmarks
+      // Single folder: show only that folder's bookmarks
       bookmarksUnsubscribeRef.current = subscribeToBookmarksInFolder(
         user.uid,
         currentSpaceId,
         activeCollectionId,
         activeFolderId,
         (fetchedBookmarks) => {
-          setBookmarks(fetchedBookmarks);
+          setBookmarks(
+            fetchedBookmarks.map((b) => ({ ...b, folderId: activeFolderId }))
+          );
           setLoadingBookmarks(false);
         }
       );
     } else {
-      // Subscribe to collection bookmarks
-      bookmarksUnsubscribeRef.current = subscribeToBookmarksInCollection(
-        user.uid,
-        currentSpaceId,
-        activeCollectionId,
-        (fetchedBookmarks) => {
-          setBookmarks(fetchedBookmarks);
-          setLoadingBookmarks(false);
-        }
+      // Collection view: aggregate collection-level bookmarks + all folder bookmarks
+      collectionBookmarksRef.current = [];
+      folderBookmarksRef.current = {};
+
+      const mergeBookmarks = () => {
+        const fromCollection = collectionBookmarksRef.current;
+        const fromFolders = Object.values(folderBookmarksRef.current).flat();
+        const combined = [...fromCollection, ...fromFolders];
+        combined.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        setBookmarks(combined);
+        setLoadingBookmarks(false);
+      };
+
+      const unsubs: (() => void)[] = [];
+
+      unsubs.push(
+        subscribeToBookmarksInCollection(
+          user.uid,
+          currentSpaceId,
+          activeCollectionId,
+          (fetchedBookmarks) => {
+            collectionBookmarksRef.current = fetchedBookmarks;
+            mergeBookmarks();
+          }
+        )
       );
+
+      const folders = foldersMap[activeCollectionId] ?? [];
+      folders.forEach((folder) => {
+        unsubs.push(
+          subscribeToBookmarksInFolder(
+            user.uid,
+            currentSpaceId,
+            activeCollectionId,
+            folder.id,
+            (fetchedBookmarks) => {
+              folderBookmarksRef.current = {
+                ...folderBookmarksRef.current,
+                [folder.id]: fetchedBookmarks.map((b) => ({
+                  ...b,
+                  folderId: folder.id,
+                })),
+              };
+              mergeBookmarks();
+            }
+          )
+        );
+      });
+
+      bookmarksUnsubscribeRef.current = () => unsubs.forEach((u) => u());
     }
 
     return () => {
@@ -413,7 +461,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         bookmarksUnsubscribeRef.current = null;
       }
     };
-  }, [user, currentSpaceId, activeCollectionId, activeFolderId]);
+  }, [user, currentSpaceId, activeCollectionId, activeFolderId, foldersMap]);
 
   const refreshSpaces = async () => {
     // Real-time listener handles this automatically

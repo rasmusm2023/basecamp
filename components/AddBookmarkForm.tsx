@@ -7,11 +7,13 @@ import { fetchURLMetadata } from "../lib/utils/metadata";
 import { uploadBookmarkImage } from "../lib/firebase/storage";
 import { X, Link } from "./icons";
 import { Image as ImageIconPhosphor } from "phosphor-react";
+import type { Bookmark } from "../lib/types";
 
 interface AddBookmarkFormProps {
   spaceId: string;
   collectionId: string;
   folderId?: string;
+  editingBookmark?: Bookmark | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -20,9 +22,11 @@ export default function AddBookmarkForm({
   spaceId,
   collectionId,
   folderId,
+  editingBookmark = null,
   onClose,
   onSuccess,
 }: AddBookmarkFormProps) {
+  const isEditMode = !!editingBookmark;
   const { user } = useAuth();
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
@@ -61,6 +65,20 @@ export default function AddBookmarkForm({
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  // Prefill form when editing a bookmark
+  useEffect(() => {
+    if (editingBookmark) {
+      setUrl(editingBookmark.url);
+      setName(editingBookmark.name);
+      setDescription(editingBookmark.description ?? "");
+      setGatheredImage(editingBookmark.image ?? undefined);
+      setUploadedImage(undefined);
+      setSelectedImage(editingBookmark.image ? "gathered" : null);
+      setTags(editingBookmark.tags ?? []);
+      setErrors({});
+    }
+  }, [editingBookmark?.id]);
 
   // Get the selected image URL
   const getSelectedImageUrl = (): string | undefined => {
@@ -331,35 +349,66 @@ export default function AddBookmarkForm({
     setErrors({});
 
     try {
-      // Import the bookmark creation function dynamically to avoid circular dependencies
-      const { createBookmarkInCollection, createBookmarkInFolder } =
-        await import("../lib/firebase/spaces");
-
       const imageUrl = getSelectedImageUrl();
+      const effectiveFolderId = isEditMode
+        ? editingBookmark!.folderId
+        : folderId;
 
-      if (folderId) {
-        await createBookmarkInFolder(
-          user.uid,
-          spaceId,
-          collectionId,
-          folderId,
+      if (isEditMode && editingBookmark) {
+        const { updateBookmarkInCollection, updateBookmarkInFolder } =
+          await import("../lib/firebase/spaces");
+        const updates = {
           url,
           name,
-          description.trim() || undefined,
-          imageUrl || undefined,
-          tags.length > 0 ? tags : undefined
-        );
+          description: description.trim() || undefined,
+          image: imageUrl || undefined,
+          tags: tags.length > 0 ? tags : undefined,
+        };
+        if (effectiveFolderId) {
+          await updateBookmarkInFolder(
+            user.uid,
+            spaceId,
+            collectionId,
+            effectiveFolderId,
+            editingBookmark.id,
+            updates
+          );
+        } else {
+          await updateBookmarkInCollection(
+            user.uid,
+            spaceId,
+            collectionId,
+            editingBookmark.id,
+            updates
+          );
+        }
       } else {
-        await createBookmarkInCollection(
-          user.uid,
-          spaceId,
-          collectionId,
-          url,
-          name,
-          description.trim() || undefined,
-          imageUrl || undefined,
-          tags.length > 0 ? tags : undefined
-        );
+        const { createBookmarkInCollection, createBookmarkInFolder } =
+          await import("../lib/firebase/spaces");
+        if (folderId) {
+          await createBookmarkInFolder(
+            user.uid,
+            spaceId,
+            collectionId,
+            folderId,
+            url,
+            name,
+            description.trim() || undefined,
+            imageUrl || undefined,
+            tags.length > 0 ? tags : undefined
+          );
+        } else {
+          await createBookmarkInCollection(
+            user.uid,
+            spaceId,
+            collectionId,
+            url,
+            name,
+            description.trim() || undefined,
+            imageUrl || undefined,
+            tags.length > 0 ? tags : undefined
+          );
+        }
       }
 
       onSuccess();
@@ -404,7 +453,7 @@ export default function AddBookmarkForm({
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-text-primary dark:text-white text-[24px] font-bold font-sans transition-colors duration-300">
-                Add Link
+                {isEditMode ? "Edit Link" : "Add Link"}
               </h2>
               <button
                 onClick={onClose}
@@ -780,7 +829,13 @@ export default function AddBookmarkForm({
                       : "btn-cta-disabled"
                   }`}
                 >
-                  {isLoading ? "Adding..." : "Add Link"}
+                  {isLoading
+                    ? isEditMode
+                      ? "Saving..."
+                      : "Adding..."
+                    : isEditMode
+                    ? "Save changes"
+                    : "Add Link"}
                 </button>
               </div>
             </form>
