@@ -3,16 +3,19 @@
 import { useState, useRef, KeyboardEvent, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useSpaces } from "../contexts/SpacesContext";
 import { fetchURLMetadata } from "../lib/utils/metadata";
 import { uploadBookmarkImage } from "../lib/firebase/storage";
 import { X, Link } from "./icons";
 import { Image as ImageIconPhosphor } from "phosphor-react";
-import type { Bookmark } from "../lib/types";
+import type { Bookmark, Collection, Folder } from "../lib/types";
 
 interface AddBookmarkFormProps {
   spaceId: string;
   collectionId: string;
   folderId?: string;
+  collections: Collection[];
+  foldersMap: Record<string, Folder[]>;
   editingBookmark?: Bookmark | null;
   onClose: () => void;
   onSuccess: () => void;
@@ -22,12 +25,15 @@ export default function AddBookmarkForm({
   spaceId,
   collectionId,
   folderId,
+  collections,
+  foldersMap,
   editingBookmark = null,
   onClose,
   onSuccess,
 }: AddBookmarkFormProps) {
   const isEditMode = !!editingBookmark;
   const { user } = useAuth();
+  const { updateBookmark, deleteBookmark, createBookmark } = useSpaces();
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -60,6 +66,13 @@ export default function AddBookmarkForm({
   const tagInputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
 
+  // When editing, allow changing where the link is saved (collection/folder)
+  const [destinationCollectionId, setDestinationCollectionId] =
+    useState<string>(collectionId);
+  const [destinationFolderId, setDestinationFolderId] = useState<
+    string | undefined
+  >(folderId);
+
   // Ensure component is mounted before rendering portal (client-side only)
   useEffect(() => {
     setMounted(true);
@@ -77,8 +90,10 @@ export default function AddBookmarkForm({
       setSelectedImage(editingBookmark.image ? "gathered" : null);
       setTags(editingBookmark.tags ?? []);
       setErrors({});
+      setDestinationCollectionId(collectionId);
+      setDestinationFolderId(folderId);
     }
-  }, [editingBookmark?.id]);
+  }, [editingBookmark?.id, collectionId, folderId]);
 
   // Get the selected image URL
   const getSelectedImageUrl = (): string | undefined => {
@@ -350,13 +365,12 @@ export default function AddBookmarkForm({
 
     try {
       const imageUrl = getSelectedImageUrl();
-      const effectiveFolderId = isEditMode
-        ? editingBookmark!.folderId
-        : folderId;
+      const destinationChanged =
+        isEditMode &&
+        (destinationCollectionId !== collectionId ||
+          destinationFolderId !== folderId);
 
       if (isEditMode && editingBookmark) {
-        const { updateBookmarkInCollection, updateBookmarkInFolder } =
-          await import("../lib/firebase/spaces");
         const updates = {
           url,
           name,
@@ -364,51 +378,44 @@ export default function AddBookmarkForm({
           image: imageUrl || undefined,
           tags: tags.length > 0 ? tags : undefined,
         };
-        if (effectiveFolderId) {
-          await updateBookmarkInFolder(
-            user.uid,
+        if (destinationChanged) {
+          // Move: delete from current location, create in new location
+          await deleteBookmark(
             spaceId,
             collectionId,
-            effectiveFolderId,
-            editingBookmark.id,
-            updates
+            folderId,
+            editingBookmark.id
+          );
+          await createBookmark(
+            spaceId,
+            destinationCollectionId,
+            destinationFolderId,
+            url,
+            name,
+            description.trim() || undefined,
+            imageUrl || undefined,
+            tags.length > 0 ? tags : undefined
           );
         } else {
-          await updateBookmarkInCollection(
-            user.uid,
+          await updateBookmark(
             spaceId,
             collectionId,
+            folderId ?? undefined,
             editingBookmark.id,
             updates
           );
         }
       } else {
-        const { createBookmarkInCollection, createBookmarkInFolder } =
-          await import("../lib/firebase/spaces");
-        if (folderId) {
-          await createBookmarkInFolder(
-            user.uid,
-            spaceId,
-            collectionId,
-            folderId,
-            url,
-            name,
-            description.trim() || undefined,
-            imageUrl || undefined,
-            tags.length > 0 ? tags : undefined
-          );
-        } else {
-          await createBookmarkInCollection(
-            user.uid,
-            spaceId,
-            collectionId,
-            url,
-            name,
-            description.trim() || undefined,
-            imageUrl || undefined,
-            tags.length > 0 ? tags : undefined
-          );
-        }
+        await createBookmark(
+          spaceId,
+          collectionId,
+          folderId,
+          url,
+          name,
+          description.trim() || undefined,
+          imageUrl || undefined,
+          tags.length > 0 ? tags : undefined
+        );
       }
 
       onSuccess();
@@ -799,6 +806,57 @@ export default function AddBookmarkForm({
                   </div>
                 </div>
               </div>
+
+              {/* Save to (Edit mode only) - change link destination */}
+              {isEditMode && (
+                <div className="flex flex-col gap-[8px] items-start relative w-full">
+                  <p className="text-text-secondary text-[14px] font-semibold font-sans transition-colors duration-300">
+                    Save to
+                  </p>
+                  <div className="flex gap-3 w-full flex-wrap">
+                    <div className="flex-1 min-w-[140px]">
+                      <select
+                        value={destinationCollectionId}
+                        onChange={(e) => {
+                          const newCollId = e.target.value;
+                          setDestinationCollectionId(newCollId);
+                          setDestinationFolderId(undefined);
+                        }}
+                        className="w-full input-bg-gradient backdrop-blur-sm border-2 input-border-default rounded-[8px] p-[12px] text-text-secondary text-[14px] font-semibold font-sans focus:outline-none focus:input-border-focus cursor-pointer"
+                      >
+                        {collections.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-[140px]">
+                      <select
+                        value={destinationFolderId ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setDestinationFolderId(v || undefined);
+                        }}
+                        className="w-full input-bg-gradient backdrop-blur-sm border-2 input-border-default rounded-[8px] p-[12px] text-text-secondary text-[14px] font-semibold font-sans focus:outline-none focus:input-border-focus cursor-pointer"
+                      >
+                        <option value="">Collection root</option>
+                        {(foldersMap[destinationCollectionId] ?? []).map(
+                          (f) => (
+                            <option key={f.id} value={f.id}>
+                              {f.name}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </div>
+                  </div>
+                  <p className="text-text-placeholder text-[12px] font-sans">
+                    Choose where to keep this link. Changing location will move the
+                    link.
+                  </p>
+                </div>
+              )}
 
               {/* General Error Message */}
               {errors.general && (

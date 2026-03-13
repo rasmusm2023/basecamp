@@ -1,4 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { decodeHTML } from "entities";
+
+/**
+ * Decode response body as UTF-8 so special characters (å, ä, ö, etc.) are
+ * read correctly even when the server sends wrong or missing charset.
+ */
+async function readBodyAsUtf8(response: Response): Promise<string> {
+  const buffer = await response.arrayBuffer();
+  return new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+}
+
+/**
+ * Decode HTML entities in metadata (e.g. &aring; → å, &auml; → ä).
+ */
+function decodeMetaString(value: string | null): string | null {
+  if (value == null || value === "") return value;
+  return decodeHTML(value);
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -32,7 +50,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch URL: ${response.statusText}`);
     }
 
-    const html = await response.text();
+    const html = await readBodyAsUtf8(response);
 
     // Extract metadata using regex (simpler than DOMParser for server-side)
     const titleMatch =
@@ -43,7 +61,8 @@ export async function GET(request: NextRequest) {
         /<meta\s+name=["']twitter:title["']\s+content=["']([^"']+)["']/i
       ) ||
       html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].trim() : null;
+    const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+    const title = decodeMetaString(rawTitle);
 
     const descriptionMatch =
       html.match(
@@ -55,7 +74,8 @@ export async function GET(request: NextRequest) {
       html.match(
         /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i
       );
-    const description = descriptionMatch ? descriptionMatch[1].trim() : null;
+    const rawDescription = descriptionMatch ? descriptionMatch[1].trim() : null;
+    const description = decodeMetaString(rawDescription);
 
     const imageMatch =
       html.match(
@@ -90,11 +110,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      title: finalTitle,
-      description: description || undefined,
-      image: image || undefined,
-    });
+    return NextResponse.json(
+      {
+        title: finalTitle,
+        description: description || undefined,
+        image: image || undefined,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("Error fetching metadata:", error);
 

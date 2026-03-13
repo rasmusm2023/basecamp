@@ -6,6 +6,50 @@
 }
 
 /* Color System - CSS Custom Properties */
+
+/* ---------------------------------------------------------------------------
+   Accent presets – switch by changing the "Active accent" block below.
+   Options: teal | coral | amber (legacy yellow: #ffff31 kept as --color-accent-yellow-legacy)
+   To try another: in both :root and .dark, replace "teal" with "coral" or "amber".
+   --------------------------------------------------------------------------- */
+:root {
+  /* Teal (Mercedes Petronas–style accent) */
+  --accent-teal-primary: #14b8a6;
+  --accent-teal-hover: rgba(20, 184, 166, 0.4);
+  --accent-teal-selected: rgba(20, 184, 166, 0.2);
+  --accent-teal-border: rgba(20, 184, 166, 0.75);
+  --accent-teal-blob: #5eead4;
+  --accent-teal-shadow: rgba(94, 234, 212, 0.25);
+  --accent-teal-shadow-hover: rgba(94, 234, 212, 0.35);
+  --accent-teal-selected-bg: rgba(20, 184, 166, 0.2);
+  --accent-teal-glow: rgba(20, 184, 166, 0.5);
+  --accent-teal-glow-soft: rgba(20, 184, 166, 0.3);
+
+  /* Coral */
+  --accent-coral-primary: #e07c5c;
+  --accent-coral-hover: rgba(224, 124, 92, 0.4);
+  --accent-coral-selected: rgba(224, 124, 92, 0.2);
+  --accent-coral-border: rgba(224, 124, 92, 0.75);
+  --accent-coral-blob: #f0a090;
+  --accent-coral-shadow: rgba(245, 158, 142, 0.3);
+  --accent-coral-shadow-hover: rgba(245, 158, 142, 0.4);
+  --accent-coral-selected-bg: rgba(224, 124, 92, 0.2);
+  --accent-coral-glow: rgba(224, 124, 92, 0.5);
+  --accent-coral-glow-soft: rgba(224, 124, 92, 0.3);
+
+  /* Amber */
+  --accent-amber-primary: #d97706;
+  --accent-amber-hover: rgba(217, 119, 6, 0.4);
+  --accent-amber-selected: rgba(217, 119, 6, 0.2);
+  --accent-amber-border: rgba(217, 119, 6, 0.75);
+  --accent-amber-blob: #fcd34d;
+  --accent-amber-shadow: rgba(251, 191, 36, 0.3);
+  --accent-amber-shadow-hover: rgba(251, 191, 36, 0.4);
+  --accent-amber-selected-bg: rgba(217, 119, 6, 0.2);
+  --accent-amber-glow: rgba(217, 119, 6, 0.5);
+  --accent-amber-glow-soft: rgba(217, 119, 6, 0.3);
+}
+
 :root {
   /* Background Colors - Light Mode (from Figma 38-891) */
   --color-bg-primary: #f2f2f2;
@@ -30,10 +74,14 @@
   --color-input-bg-end: #ffffff;
 
   /* Accent Colors - Light Mode (from Figma 38-952) */
-  --color-accent-primary: #ffff31;
-  --color-accent-hover: rgba(255, 255, 49, 0.4);
-  --color-accent-selected: rgba(255, 255, 49, 0.2);
-  --color-accent-border: rgba(255, 255, 49, 0.75);
+  /* Legacy accent (original yellow) - kept for reference: #ffff31 */
+  --color-accent-yellow-legacy: #ffff31;
+  /* Active accent: change "teal" to "coral" or "amber" to try other presets */
+  --color-accent-primary: var(--accent-teal-primary);
+  --color-accent-hover: var(--accent-teal-hover);
+  --color-accent-selected: var(--accent-teal-selected);
+  --color-accent-border: var(--accent-teal-border);
+  --color-accent-blob: var(--accent-teal-blob);
 
   /* Selected Button Colors - Light Mode (from Figma 38-891: dark gradient) */
   --color-selected-bg-start: #0d0d0d;
@@ -85,16 +133,23 @@ html.dark,
   --color-input-bg-end: rgba(64, 64, 64, 0.2);
 
   /* Accent Colors - Dark Mode (from Figma 38-968) */
-  --color-accent-primary: #ffff31;
-  --color-accent-hover: rgba(255, 255, 49, 0.4);
-  --color-accent-selected: rgba(255, 255, 49, 0.2);
-  --color-accent-border: rgba(255, 255, 49, 0.75);
+  /* Legacy accent (original yellow) - kept for reference: #ffff31 */
+  --color-accent-yellow-legacy: #ffff31;
+  /* Active accent: change "teal" to "coral" or "amber" to try other presets */
+  --color-accent-primary: var(--accent-teal-primary);
+  --color-accent-hover: var(--accent-teal-hover);
+  --color-accent-selected: var(--accent-teal-selected);
+  --color-accent-border: var(--accent-teal-border);
+  --color-accent-blob: var(--accent-teal-blob);
 
-  /* Selected Button Colors - Dark Mode (from LoginForm: yellow with white text) */
-  --color-selected-bg-start: rgba(255, 255, 49, 0.2);
-  --color-selected-bg-end: rgba(255, 255, 49, 0.2);
-  --color-selected-border: rgba(255, 255, 49, 0.75);
+  /* Selected Button Colors - Dark Mode (from LoginForm: accent with white text) */
+  --color-selected-bg-start: var(--accent-teal-selected-bg);
+  --color-selected-bg-end: var(--accent-teal-selected-bg);
+  --color-selected-border: var(--accent-teal-border);
   --color-selected-text: #ffffff;
+  --color-accent-selected-bg: var(--accent-teal-selected-bg);
+  --color-accent-glow: var(--accent-teal-glow);
+  --color-accent-glow-soft: var(--accent-teal-glow-soft);
 
   /* Unselected Button Colors - Dark Mode (from LoginForm: gradient with gray text) */
   --color-unselected-bg: rgba(80, 80, 80, 0.2);
@@ -107,8 +162,8 @@ html.dark,
   --color-gradient-end: #5a9c76;
 
   /* Shadow Colors - Dark Mode (from Figma 38-968) */
-  --color-shadow-accent: rgba(250, 250, 130, 0.25);
-  --color-shadow-accent-hover: rgba(250, 250, 130, 0.35);
+  --color-shadow-accent: var(--accent-teal-shadow);
+  --color-shadow-accent-hover: var(--accent-teal-shadow-hover);
 
   /* Error Colors - Dark Mode */
   --color-error-bg: #a34646;
@@ -329,12 +384,12 @@ input::placeholder {
   );
 }
 
-/* Dark mode selected button - yellow background with bright yellow border and glow (from Figma 38-856) */
+/* Dark mode selected button - uses active accent (legacy yellow: #ffff31) */
 .dark .selected-bg-gradient {
-  background: rgba(255, 255, 49, 0.2);
+  background: var(--color-accent-selected-bg);
   background-image: none;
-  border-color: #ffff31 !important;
-  box-shadow: 0 0 8px rgba(255, 255, 49, 0.5), 0 0 16px rgba(255, 255, 49, 0.3);
+  border-color: var(--color-accent-primary) !important;
+  box-shadow: 0 0 8px var(--color-accent-glow), 0 0 16px var(--color-accent-glow-soft);
 }
 
 /* Selected button text color - Light mode only (#f2f2f2) */
