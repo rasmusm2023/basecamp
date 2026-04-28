@@ -48,6 +48,10 @@ export default function Dashboard() {
   const [previousSpaceId, setPreviousSpaceId] = useState<string | null>(null);
   const [showAddBookmarkForm, setShowAddBookmarkForm] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [editingBookmarkContext, setEditingBookmarkContext] = useState<{
+    collectionId: string;
+    folderId?: string;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter bookmarks by search (within current collection/folder context)
@@ -570,6 +574,12 @@ export default function Dashboard() {
                               viewMode="grid"
                               onEdit={(b) => {
                                 setEditingBookmark(b);
+                                if (activeCollectionId) {
+                                  setEditingBookmarkContext({
+                                    collectionId: activeCollectionId,
+                                    folderId: activeFolderId ?? b.folderId,
+                                  });
+                                }
                                 setShowAddBookmarkForm(true);
                               }}
                               onDelete={async () => {
@@ -626,6 +636,12 @@ export default function Dashboard() {
                               viewMode="list"
                               onEdit={(b) => {
                                 setEditingBookmark(b);
+                                if (activeCollectionId) {
+                                  setEditingBookmarkContext({
+                                    collectionId: activeCollectionId,
+                                    folderId: activeFolderId ?? b.folderId,
+                                  });
+                                }
                                 setShowAddBookmarkForm(true);
                               }}
                               onDelete={async () => {
@@ -685,18 +701,20 @@ export default function Dashboard() {
         activeCollectionId && (
           <AddBookmarkForm
             spaceId={currentSpaceId}
-            collectionId={activeCollectionId}
-            folderId={activeFolderId || undefined}
+            collectionId={editingBookmarkContext?.collectionId ?? activeCollectionId}
+            folderId={editingBookmarkContext?.folderId ?? activeFolderId ?? undefined}
             collections={collections}
             foldersMap={foldersMap}
             editingBookmark={editingBookmark ?? undefined}
             onClose={() => {
               setShowAddBookmarkForm(false);
               setEditingBookmark(null);
+              setEditingBookmarkContext(null);
             }}
             onSuccess={() => {
               setShowAddBookmarkForm(false);
               setEditingBookmark(null);
+              setEditingBookmarkContext(null);
             }}
           />
         )}

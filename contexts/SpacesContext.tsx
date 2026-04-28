@@ -15,11 +15,11 @@ import {
   deleteSpace,
   createCollection,
   updateCollectionName,
-  updateCollectionIcon,
+  updateCollectionIcon as updateCollectionIconInDb,
   deleteCollection,
   createFolder,
   updateFolderName,
-  updateFolderIcon,
+  updateFolderIcon as updateFolderIconInDb,
   deleteFolder,
   createBookmarkInCollection,
   createBookmarkInFolder,
@@ -527,7 +527,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     icon: string
   ): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
-    await updateCollectionIcon(user.uid, spaceId, collectionId, icon);
+    await updateCollectionIconInDb(user.uid, spaceId, collectionId, icon);
     // Real-time listener will update automatically
   };
 
@@ -584,7 +584,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     icon: string
   ): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
-    await updateFolderIcon(user.uid, spaceId, collectionId, folderId, icon);
+    await updateFolderIconInDb(user.uid, spaceId, collectionId, folderId, icon);
     // Real-time listener will update automatically
   };
 

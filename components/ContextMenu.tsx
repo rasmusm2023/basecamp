@@ -5,11 +5,11 @@ import { Folder, PencilSimple, Settings, Trash, CaretRight } from "./icons";
 
 export type ContextMenuItemType = "space" | "collection" | "folder";
 
-interface ContextMenuItem {
+export interface ContextMenuItem {
   label: string;
   icon: React.ComponentType<{
     size?: number;
-    weight?: string;
+    weight?: any;
     className?: string;
   }>;
   onClick: () => void;

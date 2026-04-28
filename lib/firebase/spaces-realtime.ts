@@ -76,11 +76,14 @@ export const subscribeToCollections = (
   return onSnapshot(
     collectionsQuery,
     (snapshot) => {
-      const collections = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        folders: [],
-        ...doc.data(),
-      })) as Collection[];
+      const collections: Collection[] = snapshot.docs.map((docSnap) => {
+        const data = docSnap.data() as Omit<Collection, "id" | "folders">;
+        return {
+          id: docSnap.id,
+          ...data,
+          folders: [],
+        };
+      });
 
       // Sort by createdAt
       collections.sort((a, b) => {

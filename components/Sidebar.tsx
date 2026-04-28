@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSpaces } from "../contexts/SpacesContext";
-import { Collection, Folder } from "../lib/types";
+import { Collection, Folder as FolderType } from "../lib/types";
 import {
   Book,
   CaretRight,
@@ -163,7 +163,7 @@ function EditableItem({
 interface CollectionItemProps {
   collection: Collection;
   spaceId: string;
-  folders: Folder[];
+  folders: FolderType[];
   isExpanded: boolean;
   isActive: boolean;
   activeFolderId: string | null;
@@ -366,9 +366,7 @@ function CollectionItem({
                   <div className="flex-1 min-w-0">
                     <EditableItem
                       name={folder.name}
-                      onUpdate={(newName) => {
-                        onUpdateFolder(folder.id, newName);
-                      }}
+                      onUpdate={(newName) => onUpdateFolder(folder.id, newName)}
                       textSize="text-[14px]"
                       className={folderTextColor}
                       isEditing={editingFolderId === folder.id}
@@ -1012,10 +1010,11 @@ export default function Sidebar() {
                   handleUpdateFolder(collection.id, folderId, newName)
                 }
                 onDeleteCollection={handleDeleteCollection}
-                onDeleteFolder={(folderId) => {
-                  if (!currentSpaceId) return;
-                  deleteFolderById(currentSpaceId, collection.id, folderId);
-                }}
+                onDeleteFolder={(folderId) =>
+                  currentSpaceId
+                    ? deleteFolderById(currentSpaceId, collection.id, folderId)
+                    : Promise.resolve()
+                }
                 onRenameCollection={() => setEditingCollectionId(collection.id)}
                 onRenameFolder={(folderId) => setEditingFolderId(folderId)}
                 editingCollectionId={editingCollectionId}
