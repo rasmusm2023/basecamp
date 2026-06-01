@@ -43,8 +43,10 @@ export default function AddBookmarkForm({
   const [uploadedImage, setUploadedImage] = useState<string | undefined>(
     undefined
   );
+  const [imageLinkUrl, setImageLinkUrl] = useState("");
+  const [imageLinkError, setImageLinkError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<
-    "gathered" | "uploaded" | null
+    "gathered" | "uploaded" | "link" | null
   >(null);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [hasTriedFetchingImage, setHasTriedFetchingImage] = useState(false);
@@ -85,9 +87,24 @@ export default function AddBookmarkForm({
       setUrl(editingBookmark.url);
       setName(editingBookmark.name);
       setDescription(editingBookmark.description ?? "");
-      setGatheredImage(editingBookmark.image ?? undefined);
-      setUploadedImage(undefined);
-      setSelectedImage(editingBookmark.image ? "gathered" : null);
+      const image = editingBookmark.image;
+      if (image?.startsWith("data:")) {
+        setGatheredImage(undefined);
+        setUploadedImage(image);
+        setImageLinkUrl("");
+        setSelectedImage("uploaded");
+      } else if (image?.startsWith("http")) {
+        setGatheredImage(undefined);
+        setUploadedImage(undefined);
+        setImageLinkUrl(image);
+        setSelectedImage("link");
+      } else {
+        setGatheredImage(image ?? undefined);
+        setUploadedImage(undefined);
+        setImageLinkUrl("");
+        setSelectedImage(image ? "gathered" : null);
+      }
+      setImageLinkError(null);
       setTags(editingBookmark.tags ?? []);
       setErrors({});
       setDestinationCollectionId(collectionId);
@@ -95,11 +112,43 @@ export default function AddBookmarkForm({
     }
   }, [editingBookmark?.id, collectionId, folderId]);
 
-  // Get the selected image URL
-  const getSelectedImageUrl = (): string | undefined => {
+  const resolveImageUrl = (): string | undefined => {
     if (selectedImage === "gathered") return gatheredImage;
     if (selectedImage === "uploaded") return uploadedImage;
-    return undefined;
+    if (selectedImage === "link") return imageLinkUrl.trim() || undefined;
+    const trimmedLink = imageLinkUrl.trim();
+    if (trimmedLink) return trimmedLink;
+    return gatheredImage ?? uploadedImage;
+  };
+
+  const validateImageLink = (value: string): string | null => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return "Image link must use http:// or https://";
+      }
+    } catch {
+      return "Please enter a valid image URL";
+    }
+    return null;
+  };
+
+  const applyImageLink = () => {
+    const trimmed = imageLinkUrl.trim();
+    if (!trimmed) {
+      setImageLinkError(null);
+      if (selectedImage === "link") setSelectedImage(null);
+      return;
+    }
+    const err = validateImageLink(trimmed);
+    if (err) {
+      setImageLinkError(err);
+      return;
+    }
+    setImageLinkError(null);
+    setSelectedImage("link");
   };
 
   // Fetch metadata when URL is entered
@@ -360,11 +409,19 @@ export default function AddBookmarkForm({
       return;
     }
 
+    if (imageLinkUrl.trim()) {
+      const linkError = validateImageLink(imageLinkUrl);
+      if (linkError) {
+        setImageLinkError(linkError);
+        return;
+      }
+    }
+
     setIsLoading(true);
     setErrors({});
 
     try {
-      const imageUrl = getSelectedImageUrl();
+      const imageUrl = resolveImageUrl();
       const destinationChanged =
         isEditMode &&
         (destinationCollectionId !== collectionId ||
@@ -627,7 +684,10 @@ export default function AddBookmarkForm({
                   <div className="flex-1">
                     {gatheredImage ? (
                       <div
-                        onClick={() => setSelectedImage("gathered")}
+                        onClick={() => {
+                          setSelectedImage("gathered");
+                          setImageLinkError(null);
+                        }}
                         className={`relative cursor-pointer rounded-[8px] border-2 transition-all duration-300 ${
                           selectedImage === "gathered"
                             ? "input-border-focus"
@@ -692,7 +752,10 @@ export default function AddBookmarkForm({
                       </div>
                     ) : uploadedImage ? (
                       <div
-                        onClick={() => setSelectedImage("uploaded")}
+                        onClick={() => {
+                          setSelectedImage("uploaded");
+                          setImageLinkError(null);
+                        }}
                         className={`relative cursor-pointer rounded-[8px] border-2 transition-all duration-300 ${
                           selectedImage === "uploaded"
                             ? "input-border-focus"
@@ -758,6 +821,116 @@ export default function AddBookmarkForm({
                       className="hidden"
                     />
                   </div>
+                </div>
+
+                {/* Image link URL */}
+                <div className="flex flex-col gap-[8px] w-full mt-2">
+                  <p className="text-text-secondary text-[12px] font-semibold font-sans transition-colors duration-300">
+                    Or paste an image link
+                  </p>
+                  <div className="flex gap-3 w-full items-start">
+                    <div
+                      className={`input-bg-gradient backdrop-blur-sm border-2 relative rounded-[8px] flex-1 transition-all duration-300 ${
+                        imageLinkError
+                          ? "input-border-error"
+                          : imageLinkUrl.trim()
+                            ? "input-border-focus"
+                            : "input-border-default"
+                      }`}
+                    >
+                      <div className="flex items-center p-[12px] relative rounded-[inherit] w-full gap-2">
+                        <Link
+                          size={18}
+                          weight="regular"
+                          className="text-text-secondary shrink-0"
+                        />
+                        <input
+                          type="url"
+                          value={imageLinkUrl}
+                          onChange={(e) => {
+                            setImageLinkUrl(e.target.value);
+                            if (imageLinkError) setImageLinkError(null);
+                            if (selectedImage === "link") {
+                              setSelectedImage(null);
+                            }
+                          }}
+                          onBlur={applyImageLink}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              applyImageLink();
+                            }
+                          }}
+                          placeholder="https://example.com/image.jpg"
+                          className="bg-transparent border-none outline-none text-text-secondary text-[14px] font-semibold font-sans w-full placeholder:text-text-placeholder"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={applyImageLink}
+                      disabled={!imageLinkUrl.trim()}
+                      className="shrink-0 px-4 py-3 rounded-[8px] text-[12px] font-bold font-sans bg-[#343434] text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Use link
+                    </button>
+                  </div>
+                  {imageLinkError && (
+                    <p className="text-error-text text-[12px] font-semibold font-sans">
+                      {imageLinkError}
+                    </p>
+                  )}
+                  {imageLinkUrl.trim() &&
+                    !imageLinkError &&
+                    validateImageLink(imageLinkUrl) === null && (
+                      <div
+                        onClick={() => setSelectedImage("link")}
+                        className={`relative cursor-pointer rounded-[8px] border-2 transition-all duration-300 w-full max-w-[280px] ${
+                          selectedImage === "link"
+                            ? "input-border-focus"
+                            : "input-border-default"
+                        }`}
+                      >
+                        <img
+                          src={imageLinkUrl.trim()}
+                          alt="Image from link"
+                          className="w-full h-[120px] object-cover rounded-[8px]"
+                          onError={() => {
+                            setImageLinkError(
+                              "Could not load image from this link"
+                            );
+                            if (selectedImage === "link") {
+                              setSelectedImage(null);
+                            }
+                          }}
+                        />
+                        {selectedImage === "link" && (
+                          <div className="absolute inset-0 bg-accent-primary/20 border-2 border-accent-primary rounded-[8px] flex items-center justify-center">
+                            <div className="bg-accent-primary text-[#0d0d0d] px-3 py-1 rounded-[8px] text-[12px] font-bold font-sans">
+                              Selected
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageLinkUrl("");
+                            setImageLinkError(null);
+                            if (selectedImage === "link") {
+                              setSelectedImage(null);
+                            }
+                          }}
+                          className="absolute top-2 right-2 bg-black/70 rounded-full p-2 hover:bg-black/90 transition-colors"
+                        >
+                          <X
+                            size={16}
+                            weight="regular"
+                            className="text-white"
+                          />
+                        </button>
+                      </div>
+                    )}
                 </div>
               </div>
 
