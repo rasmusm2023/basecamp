@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# NEXT_PUBLIC_* Firebase variables must be set in the Netlify UI.
+# They are inlined at build time — changing them requires a new deploy.

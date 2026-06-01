@@ -81,39 +81,60 @@ export default function LoginForm() {
       try {
         await signIn(email, password, rememberMe);
         router.push("/dashboard");
-      } catch (error: any) {
-        // Handle Firebase auth errors
-        // Firebase v9+ errors have error.code, but we also check error.message as fallback
-        const errorCode = error?.code;
-        const errorMessage = error?.message || "";
-        
-        // Handle credential errors (expected user behavior - don't log to console)
-        if (
+      } catch (error: unknown) {
+        const errorCode =
+          error && typeof error === "object" && "code" in error
+            ? String((error as { code?: string }).code)
+            : "";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : error && typeof error === "object" && "message" in error
+              ? String((error as { message?: string }).message)
+              : "";
+
+        let message = "Failed to sign in. Please try again.";
+
+        if (errorMessage.includes("Firebase is not configured")) {
+          message =
+            "Firebase is not configured on this deployment. Add NEXT_PUBLIC_FIREBASE_* variables in Netlify, then clear cache and redeploy.";
+        } else if (errorCode === "auth/unauthorized-domain") {
+          message =
+            "This site domain is not authorized in Firebase. Add your Netlify URL under Authentication → Settings → Authorized domains.";
+        } else if (
+          errorCode === "auth/api-key-not-valid" ||
+          errorCode === "auth/invalid-api-key"
+        ) {
+          message =
+            "Invalid Firebase API key, or the key is restricted and does not allow this domain.";
+        } else if (errorCode === "auth/operation-not-allowed") {
+          message =
+            "Email/password sign-in is disabled in Firebase. Enable it under Authentication → Sign-in method.";
+        } else if (
           errorCode === "auth/invalid-credential" ||
           errorCode === "auth/user-not-found" ||
           errorCode === "auth/wrong-password" ||
-          errorMessage.includes("invalid-credential") ||
-          errorMessage.includes("user-not-found") ||
-          errorMessage.includes("wrong-password")
+          errorMessage.includes("invalid-credential")
         ) {
-          setErrors({
-            email: "Invalid email or password",
-            password: "Invalid email or password",
-          });
-          setShowErrorBorders(true);
-        } else if (errorCode === "auth/invalid-email" || errorMessage.includes("invalid-email")) {
-          setErrors({
-            email: "Invalid email address",
-          });
-          setShowErrorBorders(true);
-        } else {
-          // Log unexpected errors only
-          console.error("Unexpected login error:", error);
-          setErrors({
-            email: "Failed to sign in. Please try again.",
-          });
-          setShowErrorBorders(true);
+          message = "Invalid email or password for this Firebase project.";
+        } else if (
+          errorCode === "auth/invalid-email" ||
+          errorMessage.includes("invalid-email")
+        ) {
+          message = "Invalid email address.";
+        } else if (errorCode === "auth/too-many-requests") {
+          message = "Too many attempts. Wait a few minutes and try again.";
+        } else if (errorCode === "auth/network-request-failed") {
+          message = "Network error talking to Firebase. Check your connection or ad blockers.";
         }
+
+        console.error("Login error:", errorCode || errorMessage, error);
+
+        setErrors({
+          email: message,
+          password: message.includes("password") ? message : undefined,
+        });
+        setShowErrorBorders(true);
         setIsSubmitting(false);
       }
     }
