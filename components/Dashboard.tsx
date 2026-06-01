@@ -48,6 +48,10 @@ export default function Dashboard() {
   const [previousSpaceId, setPreviousSpaceId] = useState<string | null>(null);
   const [showAddBookmarkForm, setShowAddBookmarkForm] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [editingBookmarkContext, setEditingBookmarkContext] = useState<{
+    collectionId: string;
+    folderId?: string;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter bookmarks by search (within current collection/folder context)
@@ -156,7 +160,7 @@ export default function Dashboard() {
                     className="w-full max-w-[720px] transition-all duration-500 ease-in-out flex flex-col gap-[24px] items-center mx-auto relative"
                     style={{ marginTop: "calc(400px - 36px - 64px)" }}
                   >
-                    {/* Blurred yellow dot with tail effect */}
+                    {/* Blurred accent dot with tail effect (legacy yellow tint: #FFFF99) */}
                     <div
                       className="absolute -z-10 animate-move-dot"
                       style={{
@@ -170,7 +174,7 @@ export default function Dashboard() {
                         className="absolute rounded-full blur-[40px] opacity-60"
                         style={{
                           background:
-                            "linear-gradient(to right, transparent 0%, #FFFF99 50%, #FFFF99 100%)",
+                            "linear-gradient(to right, transparent 0%, var(--color-accent-blob) 50%, var(--color-accent-blob) 100%)",
                           width: "150px",
                           height: "40px",
                           left: "0",
@@ -183,7 +187,7 @@ export default function Dashboard() {
                         className="absolute rounded-full blur-[20px] opacity-90"
                         style={{
                           background:
-                            "radial-gradient(circle, #FFFF99 0%, transparent 70%)",
+                            "radial-gradient(circle, var(--color-accent-blob) 0%, transparent 70%)",
                           width: "30px",
                           height: "30px",
                           right: "0",
@@ -570,6 +574,12 @@ export default function Dashboard() {
                               viewMode="grid"
                               onEdit={(b) => {
                                 setEditingBookmark(b);
+                                if (activeCollectionId) {
+                                  setEditingBookmarkContext({
+                                    collectionId: activeCollectionId,
+                                    folderId: activeFolderId ?? b.folderId,
+                                  });
+                                }
                                 setShowAddBookmarkForm(true);
                               }}
                               onDelete={async () => {
@@ -626,6 +636,12 @@ export default function Dashboard() {
                               viewMode="list"
                               onEdit={(b) => {
                                 setEditingBookmark(b);
+                                if (activeCollectionId) {
+                                  setEditingBookmarkContext({
+                                    collectionId: activeCollectionId,
+                                    folderId: activeFolderId ?? b.folderId,
+                                  });
+                                }
                                 setShowAddBookmarkForm(true);
                               }}
                               onDelete={async () => {
@@ -685,16 +701,20 @@ export default function Dashboard() {
         activeCollectionId && (
           <AddBookmarkForm
             spaceId={currentSpaceId}
-            collectionId={activeCollectionId}
-            folderId={activeFolderId || undefined}
+            collectionId={editingBookmarkContext?.collectionId ?? activeCollectionId}
+            folderId={editingBookmarkContext?.folderId ?? activeFolderId ?? undefined}
+            collections={collections}
+            foldersMap={foldersMap}
             editingBookmark={editingBookmark ?? undefined}
             onClose={() => {
               setShowAddBookmarkForm(false);
               setEditingBookmark(null);
+              setEditingBookmarkContext(null);
             }}
             onSuccess={() => {
               setShowAddBookmarkForm(false);
               setEditingBookmark(null);
+              setEditingBookmarkContext(null);
             }}
           />
         )}

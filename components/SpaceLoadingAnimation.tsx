@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+/* Legacy accent (original yellow) - kept for reference: #FFFF31 */
+
 interface SpaceLoadingAnimationProps {
   onComplete: () => void;
   spaceName?: string;
@@ -49,10 +51,10 @@ export default function SpaceLoadingAnimation({
       <div className="relative w-full max-w-[800px] h-[4px] mb-[32px] overflow-hidden">
         <div className="absolute inset-0 bg-[rgba(255,255,255,0.1)] dark:bg-[rgba(255,255,255,0.1)]" />
         <div
-          className="absolute top-0 left-0 h-full bg-[#FFFF31] dark:bg-[#FFFF31] transition-all duration-75 ease-linear"
+          className="absolute top-0 left-0 h-full bg-[var(--color-accent-primary)] dark:bg-[var(--color-accent-primary)] transition-all duration-75 ease-linear"
           style={{
             width: `${percentage}%`,
-            boxShadow: `0 0 20px #FFFF31, 0 0 40px #FFFF31`,
+            boxShadow: `0 0 20px var(--color-accent-primary), 0 0 40px var(--color-accent-primary)`,
           }}
         />
         {/* LED dots */}
@@ -64,7 +66,7 @@ export default function SpaceLoadingAnimation({
               key={i}
               className={`absolute top-1/2 -translate-y-1/2 w-[8px] h-[8px] rounded-full transition-all duration-75 ${
                 isActive
-                  ? "bg-[#FFFF31] dark:bg-[#FFFF31] shadow-[0_0_10px_#FFFF31]"
+                  ? "bg-[var(--color-accent-primary)] dark:bg-[var(--color-accent-primary)] shadow-[0_0_10px_var(--color-accent-primary)]"
                   : "bg-[rgba(255,255,255,0.2)] dark:bg-[rgba(255,255,255,0.2)]"
               }`}
               style={{
@@ -81,7 +83,7 @@ export default function SpaceLoadingAnimation({
       </p>
 
       {/* Percentage Counter */}
-      <p className="text-[#FFFF31] dark:text-[#FFFF31] text-[48px] font-bold font-sans">
+      <p className="text-[var(--color-accent-primary)] dark:text-[var(--color-accent-primary)] text-[48px] font-bold font-sans">
         {percentage}%
       </p>
     </div>

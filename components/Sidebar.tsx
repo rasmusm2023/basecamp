@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSpaces } from "../contexts/SpacesContext";
-import { Collection, Folder } from "../lib/types";
+import { Collection, Folder as FolderType } from "../lib/types";
 import {
   Book,
   CaretRight,
@@ -163,7 +163,7 @@ function EditableItem({
 interface CollectionItemProps {
   collection: Collection;
   spaceId: string;
-  folders: Folder[];
+  folders: FolderType[];
   isExpanded: boolean;
   isActive: boolean;
   activeFolderId: string | null;
@@ -220,16 +220,16 @@ function CollectionItem({
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredFolderId, setHoveredFolderId] = useState<string | null>(null);
 
-  // Only show yellow if collection is active AND expanded AND has no active folder
-  // If collection is not expanded, it should never be yellow
+  // Only show accent if collection is active AND expanded AND has no active folder
+  // If collection is not expanded, it should never show accent (legacy yellow: #ffff31)
   const hasActiveFolder = activeFolderId !== null;
-  const shouldShowYellow = isActive && isExpanded && !hasActiveFolder;
+  const shouldShowAccent = isActive && isExpanded && !hasActiveFolder;
 
-  const collectionTextColor = shouldShowYellow
-    ? "text-[#FFFF31]"
+  const collectionTextColor = shouldShowAccent
+    ? "text-[var(--color-accent-primary)]"
     : "text-text-primary dark:text-white opacity-50";
-  const collectionIconColor = shouldShowYellow
-    ? "text-[#FFFF31]"
+  const collectionIconColor = shouldShowAccent
+    ? "text-[var(--color-accent-primary)]"
     : "text-text-primary dark:text-white opacity-50";
 
   const showCollectionIcon =
@@ -242,7 +242,7 @@ function CollectionItem({
           isHovered || isMenuOpen("collection", collection.id) || isActive || isExpanded
             ? "bg-[rgba(255,255,255,0.05)]"
             : ""
-        } ${shouldShowYellow ? "bg-accent-selected" : ""}`}
+        } ${shouldShowAccent ? "bg-accent-selected" : ""}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={(e) => {
@@ -254,7 +254,7 @@ function CollectionItem({
           onToggle();
         }}
       >
-        <div className={`absolute left-0 top-0 bottom-0 ${isExpanded ? 'w-[3px] bg-[#FFFF31]' : 'w-[3px] bg-[rgba(255,255,255,0.3)]'}`} />
+        <div className={`absolute left-0 top-0 bottom-0 ${isExpanded ? 'w-[3px] bg-[var(--color-accent-primary)]' : 'w-[3px] bg-[rgba(255,255,255,0.3)]'}`} />
         <div
           className="flex items-center relative shrink-0 flex-1 min-w-0"
         >
@@ -324,7 +324,7 @@ function CollectionItem({
           {folders.map((folder) => {
             const isFolderActive = activeFolderId === folder.id;
             const folderTextColor = isFolderActive
-              ? "text-[#FFFF31]"
+              ? "text-[var(--color-accent-primary)]"
               : "text-text-primary dark:text-white opacity-50";
 
             const isFolderHovered = hoveredFolderId === folder.id;
@@ -352,7 +352,7 @@ function CollectionItem({
                   }
                 }}
               >
-                <div className={`absolute left-0 top-0 bottom-0 ${isFolderActive ? 'w-[1px] bg-[#FFFF31]' : 'w-[1px] bg-[rgba(255,255,255,0.3)]'}`} />
+                <div className={`absolute left-0 top-0 bottom-0 ${isFolderActive ? 'w-[1px] bg-[var(--color-accent-primary)]' : 'w-[1px] bg-[rgba(255,255,255,0.3)]'}`} />
                 <div
                   className="flex items-center gap-2 relative shrink-0 flex-1 min-w-0"
                 >
@@ -366,9 +366,7 @@ function CollectionItem({
                   <div className="flex-1 min-w-0">
                     <EditableItem
                       name={folder.name}
-                      onUpdate={(newName) => {
-                        onUpdateFolder(folder.id, newName);
-                      }}
+                      onUpdate={(newName) => onUpdateFolder(folder.id, newName)}
                       textSize="text-[14px]"
                       className={folderTextColor}
                       isEditing={editingFolderId === folder.id}
@@ -1012,10 +1010,11 @@ export default function Sidebar() {
                   handleUpdateFolder(collection.id, folderId, newName)
                 }
                 onDeleteCollection={handleDeleteCollection}
-                onDeleteFolder={(folderId) => {
-                  if (!currentSpaceId) return;
-                  deleteFolderById(currentSpaceId, collection.id, folderId);
-                }}
+                onDeleteFolder={(folderId) =>
+                  currentSpaceId
+                    ? deleteFolderById(currentSpaceId, collection.id, folderId)
+                    : Promise.resolve()
+                }
                 onRenameCollection={() => setEditingCollectionId(collection.id)}
                 onRenameFolder={(folderId) => setEditingFolderId(folderId)}
                 editingCollectionId={editingCollectionId}

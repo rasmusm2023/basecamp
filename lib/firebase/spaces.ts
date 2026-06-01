@@ -204,11 +204,14 @@ export const getCollections = async (
     // Fetch without orderBy for speed (sort manually)
     const collectionsSnapshot = await getDocs(collectionsRef);
 
-    const collections: Collection[] = collectionsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      folders: [],
-      ...doc.data(),
-    })) as Collection[];
+    const collections: Collection[] = collectionsSnapshot.docs.map((docSnap) => {
+      const data = docSnap.data() as Omit<Collection, "id" | "folders">;
+      return {
+        id: docSnap.id,
+        ...data,
+        folders: [],
+      };
+    });
 
     // Sort manually (faster than waiting for index)
     collections.sort((a, b) => {
@@ -651,8 +654,14 @@ export const updateBookmarkInCollection = async (
     db!,
     `${getBookmarkPath(userId, spaceId, collectionId)}/${bookmarkId}`
   );
+
+  // Firestore rejects `undefined` values in update payloads.
+  const cleanedUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([, v]) => v !== undefined)
+  );
+
   await updateDoc(bookmarkRef, {
-    ...updates,
+    ...cleanedUpdates,
     updatedAt: new Date().toISOString(),
   });
 };
@@ -674,8 +683,14 @@ export const updateBookmarkInFolder = async (
     db!,
     `${getBookmarkPath(userId, spaceId, collectionId, folderId)}/${bookmarkId}`
   );
+
+  // Firestore rejects `undefined` values in update payloads.
+  const cleanedUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([, v]) => v !== undefined)
+  );
+
   await updateDoc(bookmarkRef, {
-    ...updates,
+    ...cleanedUpdates,
     updatedAt: new Date().toISOString(),
   });
 };
