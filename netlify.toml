@@ -4,6 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Firebase client API keys are public by design (see Firebase docs). They are
+  # inlined via NEXT_PUBLIC_* at build time; smart scanning would block every deploy.
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
 # NEXT_PUBLIC_* Firebase variables must be set in the Netlify UI.
 # They are inlined at build time — changing them requires a new deploy.
